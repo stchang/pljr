@@ -1,7 +1,7 @@
-% template.tex
-% CSG379 Spring 2009 - Felleisen
-% //2009
-% Chapter  Exercises
+% compactness.tex
+% PL,Jr.,Jr.
+% 5/26/2009
+% Enderton, Chapter 1.7
 
 \documentclass[12pt]{article}	% YOUR INPUT FILE MUST CONTAIN THESE
 \usepackage{url}
@@ -22,17 +22,87 @@
 
 \begin{document}							% TWO LINES PLUS THE \end COMMAND AT
 															% THE END
-\begin{center}
-\Large Chapter  Exercises
-\end{center}
 
 \begin{flushleft}
-\textbf{Exercise .}
+
+\underline{Definitions}\\
+A set $\Sigma$ of wffs is \textit{satisfiable} iff there is a truth assignment that satisfies every member of $\Sigma$.\\
+
+\vspace{10mm}
+
+\textbf{Exercise 1.7.1} \\
+Assume every finite subset of $\Sigma$ is satisfiable. Show that the same is true of at least one of the sets $\Sigma;\alpha$ and $\Sigma;\neg\alpha$. \\
+
+\vspace{5mm}
+
+\underline{Proof}: \\
+Proof by contradiction. Assume that neither every finite subset of $\Sigma;\alpha$ nor every finite subset of $\Sigma;\neg\alpha$ is satisfiable. That means there is some finite $\Sigma_1 \subseteq \Sigma$ such that $\Sigma_1;\alpha$ is unsatisfiable and that there is some finite $\Sigma_2 \subseteq \Sigma$ such that $\Sigma_2;\neg\alpha$ is unsatisfiable. However, $\Sigma_1 \cup \Sigma_2$ is a finite subset of $\Sigma$, so it must be satisfiable, from the stated assumption. This means that there exists some truth assignment $v$ such that $\bar{v}(\varphi) = T$, for $\varphi \in (\Sigma_1 \cup \Sigma_2)$. However, either $\bar{v}(\alpha) = T$ or $\bar{v}(\alpha) = F$, which means that either $\Sigma_1;\alpha$ or $\Sigma_2;\neg\alpha$ is satisfiable. This is a contradiction from what was previously stated. \\
+
+\vspace{10mm}
+
+\textbf{Exercise 1.7.2} \\
+Let $\Delta$ be a set of wffs such that (i) every finite subset of $\Delta$ is satisfiable, and (ii) for every wff $\alpha$, either $\alpha \in \Delta$ or $(\neg\alpha) \in \Delta$. Define the truth assignment $v$:
+
+$$
+v(A) = 
+\begin{cases}
+T & \text{iff $A \in \Delta$,}\\
+F & \text{iff $A \notin \Delta$}
+\end{cases}
+$$
+
+for each sentence symbol. Show that for every wff $\varphi$, $\bar{v}(\varphi) = T$ iff $\varphi \in \Delta$. \\
+
+\vspace{5mm}
+
+\underline{Proof}: \\
+$\Rightarrow$ We need to show that, for every wff $\varphi$, if $\bar{v}(\varphi) = T$, then $\varphi \in \Delta$. \\
+
+\vspace{2mm}
+
+If $\bar{v}(\varphi) = T$, but $\varphi \notin \Delta$, then by (ii), $(\neg\varphi) \in \Delta$. However, $\bar{v}(\neg\varphi) = F$, which means that there is a finite subset of $\Delta$ that is unsatisfiable. However, this cannot be because according to (i), every finite subset of $\Delta$ is satisfiable. Therefore, if $\bar{v}(\varphi) = T$, then $\varphi \in \Delta$. \\
+
+\vspace{5mm}
+
+$\Leftarrow$ We need to show that, for every wff $\varphi$, if $\varphi \in \Delta$, then $\bar{v}(\varphi) = T$. \\
+
+\vspace{2mm}
+
+We will prove this by structural induction on $\varphi$. \\
+
+\vspace{2mm}
+
+\underline{Case} $\varphi = A$ \\
+Since $A \in \Delta$, then $v(A) = T$, by definition of $v$. \\
+
+\vspace{2mm}
+
+\underline{Case} $\varphi = \alpha \wedge \beta$ \\
+We first show that if $\varphi \in \Delta$, then both $\alpha$ and $\beta$ are in $\Delta$. If $\varphi \in \Delta$ and $\alpha \notin \Delta$, then by (ii), $\neg\alpha \in \Delta$. However, this means that $\{\varphi,\neg\alpha\}$ is a finite subset of $\Delta$. However, $\{\varphi,\neg\alpha\}$ is unsatisfiable because $\varphi$ is true when $\neg\alpha$ is false and vice versa. Therefore, $\{\varphi,\neg\alpha\}$ cannot be a finite subset of $\Delta$ because according to (i), every finite subset of $\Delta$ is satisfiable. Therefore, if $\varphi \in \Delta$ then $\alpha \in \Delta$. We can also make a similar argument for $\beta$ and therefore, if $\varphi \in \Delta$ then $\alpha,\beta \in \Delta$.
+
+\vspace{2mm}
+
+If $\alpha \in \Delta$, then by the induction hypothesis, $\bar{v}(\alpha) = T$. Similarly, $\bar{v}(\beta) = T$. Since $\varphi = \alpha \wedge \beta$, then $\bar{v}(\varphi) = T$. Therefore, if $\varphi \in \Delta$, then $\bar{v}(\varphi) = T$. \\
+
+\vspace{2mm}
+
+\underline{Case} $\varphi = \alpha \vee \beta$ \\
+\underline{Case} $\varphi = \alpha \rightarrow \beta$ \\
+\underline{Case} $\varphi = \alpha \leftrightarrow \beta$ \\
+\underline{Case} $\varphi = \neg\alpha$ \\
+A proof strategy that is similar to the one used for the conjunction case can also be used for these cases.
+
+\vspace{2mm}
+
+Therefore, we have shown that if $\varphi \in \Delta$, then $\bar{v}(\varphi) = T$, for all cases.
+
+
+
 \end{flushleft}
 
 %\cite{}
-\bibliographystyle{acm}
-\bibliography{template}
+%\bibliographystyle{acm}
+%\bibliography{template}
 
 
 \end{document} % THE INPUT FILE ENDS LIKE THIS
