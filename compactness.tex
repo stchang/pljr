@@ -5,12 +5,12 @@
 
 \documentclass[12pt]{article}	% YOUR INPUT FILE MUST CONTAIN THESE
 \usepackage{url}
-\oddsidemargin  -0.1in
+\oddsidemargin  -0.5in
 \evensidemargin 0.0in
-\textwidth      6.7in
-\headheight     -0.5in
+\textwidth      7.5in
+\headheight     -1in
 \topmargin      0.0in
-\textheight     9.0in
+\textheight     10.0in
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{mathpartir}
@@ -25,11 +25,17 @@
 
 \begin{flushleft}
 
-\underline{Definitions}\\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Definitions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\textbf{Definitions}\\
 A set $\Sigma$ of wffs is \textit{satisfiable} iff there is a truth assignment that satisfies every member of $\Sigma$.\\
 
 \vspace{10mm}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Exercise 1.7.1
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \textbf{Exercise 1.7.1} \\
 Assume every finite subset of $\Sigma$ is satisfiable. Show that the same is true of at least one of the sets $\Sigma;\alpha$ and $\Sigma;\neg\alpha$. \\
 
@@ -40,6 +46,9 @@ Proof by contradiction. Assume that neither every finite subset of $\Sigma;\alph
 
 \vspace{10mm}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Exercise 1.7.1
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \textbf{Exercise 1.7.2} \\
 Let $\Delta$ be a set of wffs such that (i) every finite subset of $\Delta$ is satisfiable, and (ii) for every wff $\alpha$, either $\alpha \in \Delta$ or $(\neg\alpha) \in \Delta$. Define the truth assignment $v$:
 
@@ -78,7 +87,7 @@ Since $A \in \Delta$, then $v(A) = T$, by definition of $v$. \\
 \vspace{2mm}
 
 \underline{Case} $\varphi = \alpha \wedge \beta$ \\
-We first show that if $\varphi \in \Delta$, then both $\alpha$ and $\beta$ are in $\Delta$. If $\varphi \in \Delta$ and $\alpha \notin \Delta$, then by (ii), $\neg\alpha \in \Delta$. However, this means that $\{\varphi,\neg\alpha\}$ is a finite subset of $\Delta$. However, $\{\varphi,\neg\alpha\}$ is unsatisfiable because $\varphi$ is true when $\neg\alpha$ is false and vice versa. Therefore, $\{\varphi,\neg\alpha\}$ cannot be a finite subset of $\Delta$ because according to (i), every finite subset of $\Delta$ is satisfiable. Therefore, if $\varphi \in \Delta$ then $\alpha \in \Delta$. We can also make a similar argument for $\beta$ and therefore, if $\varphi \in \Delta$ then $\alpha,\beta \in \Delta$.
+We first show that if $\varphi \in \Delta$, then both $\alpha$ and $\beta$ are in $\Delta$. If $\varphi \in \Delta$ and $\alpha \notin \Delta$, then by (ii), $\neg\alpha \in \Delta$. However, this means that $\{\varphi,\neg\alpha\}$ is a finite subset of $\Delta$. However, $\{\varphi,\neg\alpha\}$ is unsatisfiable because $\varphi$ is true when $\neg\alpha$ is false and vice versa. Therefore, $\{\varphi,\neg\alpha\}$ cannot be a finite subset of $\Delta$ because according to (i), every finite subset of $\Delta$ is satisfiable. Therefore, if $\varphi \in \Delta$, then $\alpha \in \Delta$. We can also make a similar argument for $\beta$ and therefore, if $\varphi \in \Delta$, then $\alpha,\beta \in \Delta$.
 
 \vspace{2mm}
 
@@ -96,10 +105,81 @@ A proof strategy that is similar to the one used for the conjunction case can al
 
 Therefore, we have shown that if $\varphi \in \Delta$, then $\bar{v}(\varphi) = T$, for all cases.
 
+\vspace{2mm}
 
+Since we have proven both directions, we can conclude that for every wff $\varphi$, if $\varphi \in \Delta$, then $\bar{v}(\varphi) = T$. \\
+
+\vspace{10mm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Compactness Theorem
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\textbf{Compactness Theorem} \\
+A set of wffs is satisfiable iff every finite subset is satisfiable. \\
+
+\vspace{5mm}
+
+\underline{Proof}: \\
+$\Rightarrow$ We need to show that if a set of wffs is satisfiable, then every finite subset is satisfiable. \\
+
+\vspace{2mm}
+
+If a set of wffs is satisfiable, then every finite subset of the set is automatically satisfiable. \\
+
+\vspace{5mm}
+
+$\Leftarrow$ We need to show that if every finite subset of a set of wffs is satisfiable, then the set itself is satisfiable. \\
+
+\vspace{2mm}
+
+Say the set in question is called $\Sigma$.
+
+\begin{enumerate}
+	\item Enumerate every wff $\alpha_1$, $\alpha_2$, $\ldots$
+	\item Let $\Delta_0 = \Sigma$
+	\item Let 
+	$
+	\Delta_{n+1} = 
+	\begin{cases}
+	\Delta_n;\alpha{n+1}      & \text{if this is finitely satisfiable,}\\
+	\Delta_n;\neg\alpha_{n+1} & \text{otherwise.}
+	\end{cases}
+	$
+	From the result of Exercise 1.7.1, we know that every $\Delta_n$ is satisfiable.
+	\item Let $\Delta = \bigcup_n\Delta_n$
+	\item We know that every finite subset of $\Delta$ is satisfiable because every finite subset of $\Delta$ is also a subset of some $\Delta_n$, which is finitely satisfiable. We also know that for any wff $\alpha$, either $\alpha \in \Delta$ or $\neg\alpha \in \Delta$. Therefore, if we have a truth assignment $v$ such that $v(A) = T$ iff $A \in \Delta$, from Exercise 1.7.2, we know that if $\varphi \in \Delta$, then $\bar{v}(\varphi) = T$. Since every wff in $\Delta$ is satisfied by $v$, then $\Delta$ is satisfiable.
+	\item Since $\Sigma \subseteq \Delta$, $v$ must also safisfy $\Sigma$, so therefore $\Sigma$ is satisfiable.
+\end{enumerate}
+
+\vspace{10mm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Corollary
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\textbf{Corollary} \\
+If $\Sigma \models \tau$, then there is a finite $\Sigma_0 \subseteq \Sigma$ such that $\Sigma_0 \models \tau$.
+
+\vspace{10mm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Exercise 1.7.3 - Proof of Compactness Theorem Using Corollary
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\textbf{Exercise 1.7.3 - Proof of Compactness Theorem Using Corollary} \\
+$\Rightarrow$ We must show that if a set of wffs is satisfiable, then every finite subset is satisfiable. \\
+
+\vspace{2mm}
+
+If a set of wffs is satisfiable, then every finite subset is automatically satisfiable. \\
+
+\vspace{5mm}
+
+$\Leftarrow$ We must show that if every finite subset of a set of wffs is satisfiable, then the set itself is satisfiable. \\
+
+\vspace{2mm}
+
+Proof by contradiction. Assume that we have a set of wffs $\Sigma$ such that every finite subset of $\Sigma$ is satisfiable, but that $\Sigma$ itself is unsatisfiable. This means that $\Sigma \models \tau$, for any wff $\tau$. According to the corollary, there is a finite subset $\Sigma_0 \subseteq \Sigma$ such that $\Sigma_0 \models \tau$. Let $\tau = \alpha \wedge \neg\alpha$, which is unsatisfiable. This means that there is no $\Sigma_0 \subseteq \Sigma$ such that $\Sigma_0 \models \tau$. We have a contradiction, so therefore, if every finite subset of $\Sigma$ is satisfiable, $\Sigma$ must be satisfiable.
 
 \end{flushleft}
-
 %\cite{}
 %\bibliographystyle{acm}
 %\bibliography{template}
