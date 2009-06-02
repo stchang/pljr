@@ -107,9 +107,15 @@ Therefore, we have shown that if $\varphi \in \Delta$, then $\bar{v}(\varphi) = 
 
 \vspace{2mm}
 
-Since we have proven both directions, we can conclude that for every wff $\varphi$, if $\varphi \in \Delta$, then $\bar{v}(\varphi) = T$. \\
+Since we have proven both directions, we can conclude that for every wff $\varphi$, $\varphi \in \Delta$ iff $\bar{v}(\varphi) = T$. \\
+
+
+
 
 \vspace{10mm}
+
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Compactness Theorem
@@ -144,7 +150,7 @@ Say the set in question is called $\Sigma$.
 	\Delta_n;\alpha{n+1}      & \text{if this is finitely satisfiable,}\\
 	\Delta_n;\neg\alpha_{n+1} & \text{otherwise.}
 	\end{cases}
-	$
+	$ \\
 	From the result of Exercise 1.7.1, we know that every $\Delta_n$ is satisfiable.
 	\item Let $\Delta = \bigcup_n\Delta_n$
 	\item We know that every finite subset of $\Delta$ is satisfiable because every finite subset of $\Delta$ is also a subset of some $\Delta_n$, which is finitely satisfiable. We also know that for any wff $\alpha$, either $\alpha \in \Delta$ or $\neg\alpha \in \Delta$. Therefore, if we have a truth assignment $v$ such that $v(A) = T$ iff $A \in \Delta$, from Exercise 1.7.2, we know that if $\varphi \in \Delta$, then $\bar{v}(\varphi) = T$. Since every wff in $\Delta$ is satisfied by $v$, then $\Delta$ is satisfiable.
