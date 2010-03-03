@@ -16,9 +16,17 @@
 \usepackage{amsmath}
 \usepackage{mathpartir}
 
-\newcommand{\lub}{\bigsqcup}
-\newcommand{\deno}[1]{[\![#1]\!]}
-\newcommand{\lift}[1]{\left\lfloor #1 \right\rfloor}
+\newcommand{\keyw}[1]{ \ensuremath{ \textbf{#1} } }
+\newcommand{\integer}{ \keyw{int} }
+\newcommand{\num}{ \keyw{number} }
+\newcommand{\bool}{ \keyw{boolean} }
+\newcommand{\numnum}{ \ensuremath{ \num\rightarrow\num } }
+\newcommand{\numbool}{ \ensuremath{ \num\rightarrow\bool } }
+\newcommand{\intint}{ \ensuremath{ \integer\rightarrow\integer } }
+\newcommand{\define}{ \keyw{define} }
+\newcommand{\defcontract}{ \keyw{define/contract} }
+\newcommand{\contract}{ \ensuremath{ \longmapsto } }
+\newcommand{\dcontract}{ \ensuremath{ \stackrel{d}{\longmapsto} } }
 
 
 \begin{document}							% TWO LINES PLUS THE \end COMMAND AT
@@ -28,5 +36,80 @@
 \date{3/8/2010}
 \maketitle
 
+\begin{enumerate}
+	\item OO languages recognize value of assertion-based contracts (to specify pre/post-conditions) (Eiffel - ``Design by Contracts'', one of most requested Java extensions) (Bigloo Scheme is only functional language with contracts)
+	\item functional languages use type systems to express assertions but many type systems are not expressive enough to express some assertions
+	\item authors present $\lambda$ calculus + contracts language and prove type soundness
+	\item implementation: contract compiler inserts code to check conditions required by contract
+	\item blame/contract verification: easy with first order contracts -- caller blamed for input contract violation and function blamed for output contract violation
+	\item not as easy to verify contracts in language with higher order functions, example:
+\begin{align*}
+& g:(\integer[>9]\rightarrow\integer[0,99])\rightarrow\integer[0,99] \\
+& \keyw{val rec} \; g = \lambda \; proc.\cdots	
+\end{align*}
+	It's not enough to monitor applications of $proc$ in $g$ because $g$ may pass $proc$ to another function
+	\item blame is also complicated with higher order functions
+	\item contract syntax example:
+	
+\newcommand{\biggerthanzero}{ \textit{bigger-than-zero?} }
 
+\begin{align*}
+& ;; \biggerthanzero : \numbool \\
+& (\define \; \biggerthanzero (\lambda (x) (\geq x \; 0))) \\
+& \\
+& \textit{sqrt} : \numnum \\
+& (\defcontract \; sqrt \\
+& \;\;(\biggerthanzero \contract \biggerthanzero) \\
+& \;\;(\lambda (x) \cdots))
+\end{align*}
+
+Things to note about example:
+\begin{itemize}	
+	\item contracts can be predicates or function contracts (one predicate for domain and one for range)
+	\item contract can be arbitrary expression that evaluates to a contract -- use of \biggerthanzero
+\end{itemize}
+
+	\item example of dependent contract -- range predicate can depend on function argument
+\begin{align*}
+& \textit{sqrt} : \numnum \\
+& (\defcontract \; sqrt \\
+& \;\;(\biggerthanzero \dcontract \\
+& \;\;\;\,(\lambda(x).\lambda(res). \\
+& \hspace{10mm}(\keyw{and} \; (\biggerthanzero \; res) \\
+& \hspace{20.5mm}               (\geq (abs \; (- \; x \; (* \; res \; res))) \; 0.01)))) \\
+& \;\;(\lambda (x) \cdots))
+\end{align*}
+	
+	\item key to checking higher-order contracts is to postpone enforcement until higher order function is applied -- delay/save/saved/use example
+	\item contracts also allow for better code modularity because checking for validity of inputs is separated
+	\item assigning blame when first-class functions are involved:
+	\begin{itemize}
+		\item if base contract appears to the left of an even number of arrows, then function where first-class function is applied is to blame (covariant)
+		\item if base contract appears to the left of an odd number of arrows, then calling function is to blame (contravariant)
+	\end{itemize}
+	example:
+
+\newcommand{\greaterthannine}{ \textit{greater-than-nine?} }
+\newcommand{\betweenzeroandninetynine}{ \textit{between-zero-and-ninety-nine?} }
+
+
+\begin{align*}
+& ;; g:(\intint)\rightarrow\integer \\
+& (\defcontract \; g \\
+& \;\;((\greaterthannine \contract \betweenzeroandninetynine) \\
+& \hspace{3mm} \contract \\
+& \hspace{3mm} \betweenzeroandninetynine) \\
+& \;\;(\lambda(f)(f \; 0)) 
+\end{align*}
+
+\begin{itemize}
+\item \greaterthannine contract is violated and since it appears to the left of two arrows (even), then $g$ is to blame and this is true
+\item If instead $f$ was applied to 10 and $(f \; 10) \Rightarrow -10$, then second \betweenzeroandninetynine contract is violated and since it appears to the left of one arrow (odd), then whoever called $g$ is to blame and this is also true
+\end{itemize}
+
+	\item in Scheme, contracts are first-class
+	\item contracts are useful when dealing with callbacks because the save/use model is frequently encountered (callbacks are first ``registered'' and then used later)
+
+
+\end{enumerate}
 \end{document} % THE INPUT FILE ENDS LIKE THIS
