@@ -27,6 +27,10 @@
 \newcommand{\defcontract}{ \keyw{define/contract} }
 \newcommand{\contract}{ \ensuremath{ \longmapsto } }
 \newcommand{\dcontract}{ \ensuremath{ \stackrel{d}{\longmapsto} } }
+\newcommand{\flatred}{ \ensuremath{ \stackrel{flat}{\rightarrow} } }
+\newcommand{\hocred}{ \ensuremath{ \stackrel{hoc}{\rightarrow} } }
+\newcommand{\flatcons}[1]{ \ensuremath{ \textbf{contract}(#1) } }
+
 
 
 \begin{document}							% TWO LINES PLUS THE \end COMMAND AT
@@ -36,22 +40,175 @@
 \date{3/8/2010}
 \maketitle
 
+\newcommand{\oblig}[4]{ \ensuremath{ #1^{#2,#3,#4} } }
+
+
+\subsection*{Intro}
+
+This talk is about contracts in languages with higher order functions. I'll basically be following the paper by Findler and Felleisen - Contracts For Higher-Order Functions from ICFP 2002.
+
+
+\subsection*{History}
+
+\begin{enumerate}
+	\item Contracts have been around long before this paper and assertion-based contracts are commonly used in OO programming languages (preconditions/postconditions)
+	\item Eiffel coined the phrase ``Design by Contracts'' and the philosophy behind it (1988-1992)
+	\item Contracts is one of the most requested Java extensions
+\end{enumerate}
+
+\begin{enumerate}
+	\item languages with higher order functions generally dont support contracts because enforcing invariants on function arguments is undecidable
+	\item such languages instead have focused on type systems that can approximate some invariants 
+\end{enumerate}
+
+Paper gives 2 motivations for adding contracts to higher order languages:
+\begin{enumerate}
+	\item contracts are more expressive than type systems so you can express more invariants
+	\item By showing what invariants cannot be expressed by current type systems, contracts can inspire future type system research
+\end{enumerate}
+
+\subsection*{Contract Syntax}
+First Order contract example - used to illustrate syntax:
+
+\newcommand{\biggerthanzero}{ \textit{bigger-than-zero?} }
+
+\begin{align*}
+& ;; \biggerthanzero : \numbool \\
+& (\define \; \biggerthanzero (\lambda (x) (\geq x \; 0))) \\
+& \\
+& ;; \textit{sqrt} : \numnum \\
+& (\defcontract \; sqrt \\
+& \;\;(\biggerthanzero \dcontract \\
+& \;\;\;\,(\lambda(x).\lambda(res). \\
+& \hspace{10mm}(\keyw{and} \; (\biggerthanzero \; res) \\
+& \hspace{20.5mm}               (\geq (abs \; (- \; x \; (* \; res \; res))) \; 0.01)))) \\
+& \;\;(\lambda (x) \cdots))
+\end{align*}
+
+Things to note from example:
+\begin{enumerate}
+	\item contracts can be predicates or function contracts (one predicate for domain and one for range)
+	\item contract can be arbitrary expression that evaluates to a contract -- use of \biggerthanzero
+	\item contracts for function (range) can depend on function input
+	\item Blame is easy, function caller blamed if input predicate violated, function itself blamed if output predicate is violated
+\end{enumerate}
+
+
+\subsection*{Contracts for Higher Order Fns}
+
+\newcommand{\greaterthannine}{ \textit{greater-than-nine?} }
+\newcommand{\betweenzeroandninetynine}{ \textit{between-zero-and-ninety-nine?} }
+
+Basic example:
+\begin{align*}
+& g:(\integer[>9]\rightarrow\integer[0,99])\rightarrow\integer[0,99] \\
+& \keyw{val rec} \; g = \lambda \; f.\cdots	
+\end{align*}
+
+Things to note:
+\begin{enumerate}
+	\item contract can't be checked until $f$ is applied
+	\item easier said than done because $g$ can pass $f$ as argument to another function
+\end{enumerate}
+
+-- Give delay/save/saved/use example.
+
+However, blame for higher order functions gets complicated. How do you determine who to blame when you can't enforce contract until application and functions can get passed to other functions?
+
+Contract compiler compiles expressions with contracts into ``obligation'' expression \fbox{$\oblig{e}{c}{x}{y}$} where $e$ is expression with a contract, often a function, $c$ is contract, $x$ is party responsible for values coming out of $e$, and $y$ is party responsible for values coming into $e$
+
+Obligation reductions: \\
+
+$$D[\oblig{V_1}{\flatcons{V_2}}{out}{in}] \flatred 
+  D[if\;V_2(V_1)\;then\;V_1\;else\; blame(out)]$$
+
+$$D[(\oblig{V_1}{(V_3\longmapsto V_4)}{out}{in}\;V_2)] \hocred 
+  D[\oblig{(V_1 \;\oblig{V_2}{V_3}{in}{out})}{V_4}{in}{out}]$$
+
+Assigning blame when first-class functions are involved:
+\begin{enumerate}
+	\item if base contract appears to the left of an even number of arrows, then function where first-class function is applied is to blame (covariant)
+	\item if base contract appears to the left of an odd number of arrows, then calling function is to blame (contravariant)
+\end{enumerate}
+
+Example:
+\begin{align*}
+& ;; g:(\intint)\rightarrow\integer \\
+& (\defcontract \; g \\
+& \;\;((\greaterthannine \contract \betweenzeroandninetynine) \\
+& \hspace{3mm} \contract \\
+& \hspace{3mm} \betweenzeroandninetynine) \\
+& \;\;(\lambda(f)(f \; 0)) 
+\end{align*}
+
+$$g \; (\lambda x.25)$$
+
+\begin{align*}
+&\oblig{g}
+       {((gt9\longmapsto bet0-99)\longmapsto bet0-99)}
+       {g}
+       {main}\;(\lambda x.25) \\
+\rightarrow &\oblig{(g\;\oblig{(\lambda x.25)}
+                              {(gt9\longmapsto bet0-99)}
+                              {main}
+                              {g})}
+                   {bet0-99}
+                   {g}
+                   {main} \\
+\rightarrow &\oblig{(\oblig{(\lambda x.25)}
+                           {(gt9\longmapsto bet0-99)}
+                           {main}
+                           {g}\;0)}
+                   {bet0-99}
+                   {g}
+                   {main} \\
+\rightarrow &\oblig{(\oblig{((\lambda x.25)\;\oblig{0}
+                                                 {gt9}
+                                                 {g}
+                                                 {main})}
+                           {bet0-99}
+                           {main}
+                           {g})}
+                    {bet0-99}
+                    {g}
+                    {main} \\
+\rightarrow &\oblig{(\oblig{((\lambda x.25)\;(if\;gt9(0)\;then\;0\;else\; blame(g))}
+                           {bet0-99}
+                           {main}
+                           {g})}
+                    {bet0-99}
+                    {g}
+                    {main} \\
+\rightarrow &blame(g)
+\end{align*}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\subsection*{Other}
+
 \begin{enumerate}
 	\item OO languages recognize value of assertion-based contracts (to specify pre/post-conditions) (Eiffel - ``Design by Contracts'', one of most requested Java extensions) (Bigloo Scheme is only functional language with contracts)
 	\item functional languages use type systems to express assertions but many type systems are not expressive enough to express some assertions
 	\item authors present $\lambda$ calculus + contracts language and prove type soundness
 	\item implementation: contract compiler inserts code to check conditions required by contract
-	\item blame/contract verification: easy with first order contracts -- caller blamed for input contract violation and function blamed for output contract violation
-	\item not as easy to verify contracts in language with higher order functions, example:
-\begin{align*}
-& g:(\integer[>9]\rightarrow\integer[0,99])\rightarrow\integer[0,99] \\
-& \keyw{val rec} \; g = \lambda \; proc.\cdots	
-\end{align*}
+
 	It's not enough to monitor applications of $proc$ in $g$ because $g$ may pass $proc$ to another function
 	\item blame is also complicated with higher order functions
 	\item contract syntax example:
 	
-\newcommand{\biggerthanzero}{ \textit{bigger-than-zero?} }
 
 \begin{align*}
 & ;; \biggerthanzero : \numbool \\
@@ -63,11 +220,6 @@
 & \;\;(\lambda (x) \cdots))
 \end{align*}
 
-Things to note about example:
-\begin{itemize}	
-	\item contracts can be predicates or function contracts (one predicate for domain and one for range)
-	\item contract can be arbitrary expression that evaluates to a contract -- use of \biggerthanzero
-\end{itemize}
 
 	\item example of dependent contract -- range predicate can depend on function argument
 \begin{align*}
@@ -80,17 +232,10 @@ Things to note about example:
 & \;\;(\lambda (x) \cdots))
 \end{align*}
 	
-	\item key to checking higher-order contracts is to postpone enforcement until higher order function is applied -- delay/save/saved/use example
 	\item contracts also allow for better code modularity because checking for validity of inputs is separated
 	\item assigning blame when first-class functions are involved:
-	\begin{itemize}
-		\item if base contract appears to the left of an even number of arrows, then function where first-class function is applied is to blame (covariant)
-		\item if base contract appears to the left of an odd number of arrows, then calling function is to blame (contravariant)
-	\end{itemize}
 	example:
 
-\newcommand{\greaterthannine}{ \textit{greater-than-nine?} }
-\newcommand{\betweenzeroandninetynine}{ \textit{between-zero-and-ninety-nine?} }
 
 
 \begin{align*}
