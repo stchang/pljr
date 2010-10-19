@@ -19,6 +19,49 @@
 \begin{document}							% TWO LINES PLUS THE \end COMMAND AT
 															% THE END
 
+\subsubsection*{Kohlbecker, et al. - Hygienic Macro Expansion (1986 LFP)}
+
+\begin{itemize}
+
+	\item macro expansion in Lisp may be unhygienic
+		\begin{itemize}
+			\item ``each macro function is reponsible for the integrity of the program'' (p151)
+			\item example: $\verb!(or e1 e2)! \equiv \verb!(let ([v e1]) (if v v e2))!$
+			\item \verb!(or v #f)! expands to \verb!(let ([v v]) (if v v #f))!
+		\end{itemize}
+		
+	\item ``various techniques have been proposed to circumvent this capturing problem but they rely on the individual macro writer'' (p151)
+		\begin{itemize}
+			\item ``One of the common solutions to the capturing problem uses bizarre or freshly created identifier names for macro-generated bindings''
+		\end{itemize}
+		
+	\item ``$\ldots$ the task of safely renaming macro-generated identifiers is mechanical. It is essentially an $\alpha$-conversion which is knowledgeable about the origin of identifiers. For these reasons we propose a change to the naive macro expansion algorithm which automatically maintains hygienic conditions during expansion time.'' (p151)
+	
+	\item authors present variant of $\lambda$-calculus where you are also allowed to apply macro definitions
+		\begin{itemize}
+			\item this language expands into a core language without macros
+		\end{itemize}
+		
+	\item ``Hygiene condition for Macro Expansion: Generated identifiers that become binding instances in the completely expanded must only bind variables that are generate at the same transcription (ie - expansion) step'' (p154)
+	
+	\item authors present hygienic expansion algorithm: ``From the $\lambda$-calculus, one knows that if the hygiene condition does not hold, it can be established by an appropriate number of $\alpha$-conversions. That is also the basis of our solution. Ideally, $\alpha$-conversions should be applied with every transformation step, but that is impossible (because 1) you dont know the user context, and 2) there may be future expansions that still capture your generated variable). $\ldots$ it is a quite natural requirement that one retains the information about the origin of an identifier. To this end, we combine the expansion algorithm with a tracking mechanism.'' (p154)
+	
+	\item ``Tracking is accomplished with a time-stamping scheme. Time-stamps, sometimes called clock values, are non-negative integers.'' (p154)
+		\begin{itemize}
+			\item essentially, variables are replaced with an element of variables x identifiers
+			\item so previous example becomes \verb!(or v #f)! expands to \verb!(let ([v:1 v:0]) (if v:1 v:1 #f))!
+		\end{itemize}
+		
+	\item algorithm steps:
+		\begin{enumerate}
+				\item stamp all variables in initial program with 0
+				\item do expansion steps, incrementing time-stamp before each expansion step, and stamping variables between each step
+				\item rename where appropriate
+				\item get rid of remaining time stamps
+			\end{enumerate}
+
+		
+\end{itemize}
 
 \cite{Kohlbecker1986Hygienic,Kohlbecker1987Macrobyexample,Bawden1988Syntactic,Clinger1991Macros,Dybvig1992Syntactic,Dybvig1992Writing,Flatt2002Composable,Culpepper2004Taming,Herman2008Theory,Culpepper2010Fortifying}
 \bibliographystyle{acm}
