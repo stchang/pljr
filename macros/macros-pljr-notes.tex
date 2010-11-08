@@ -18,8 +18,17 @@
 
 \begin{document}							% TWO LINES PLUS THE \end COMMAND AT
 															% THE END
+\subsubsection*{Motivation}
+\begin{itemize}
+	\item ``Modern programming languages offer powerful facilities for procedural and data abstraction which encapsulate commonly-used patterns of procedure invocation and of data usage, respectively. Often, however, one encounters typical patterns of linguistic usage that do not fall neatly into either category. (example is \verb!let!)''~\cite[p77]{Kohlbecker1987Macrobyexample}
+	\item start with C examples? from Macros that Work?~\cite{Clinger1991Macros}
+	\item examples: or, let, swap, try catch
+	\end{itemize}
+
 
 \subsubsection*{Kohlbecker, et al. - Hygienic Macro Expansion (1986 LFP)}
+
+\paragraph{Motivation}
 
 \begin{itemize}
 
@@ -34,6 +43,13 @@
 		\begin{itemize}
 			\item ``One of the common solutions to the capturing problem uses bizarre or freshly created identifier names for macro-generated bindings''
 		\end{itemize}
+	\item hygiene
+	\item referential transparency
+\end{itemize}
+	
+\paragraph{Contribution}
+
+\begin{itemize}
 		
 	\item ``$\ldots$ the task of safely renaming macro-generated identifiers is mechanical. It is essentially an $\alpha$-conversion which is knowledgeable about the origin of identifiers. For these reasons we propose a change to the naive macro expansion algorithm which automatically maintains hygienic conditions during expansion time.'' (p151)
 	
@@ -59,9 +75,146 @@
 				\item rename where appropriate
 				\item get rid of remaining time stamps
 			\end{enumerate}
-
-		
+	
 \end{itemize}
+
+\paragraph{Criticism}
+
+\begin{itemize}
+	\item ```Hygienic macro expansion' is the only other complete solution to the macro scoping problems of which we are aware. Hygienic expansion works by `painting' the entire input expression with some distinctive color before passing it in to the expander. Then the returned replacement expression is examined to find those parts that originiated from the input expression; these can be identified by their color. The names in the unpainted text are protected from capture by the painted text, and vice versa''~\cite[p90]{Bawden1988Syntactic}
+	\item ``The painting is done without any understanding of the syntax of the input expression. Paint is applied to expressions, quoted constants, cond-clauses, and the bound variable lists from lambda-expressions. This strikes us as being very undisciplined. We prefer a scheme that is everywhere sensitive to the underlying syntactic and semantic structure of the language. In addition it is difficult to comprehend how hygienic expansion operates and why it is correct. We feel that syntactic closures solve scoping problems in a natural, straightforward way.''~\cite[p90]{Bawden1988Syntactic}
+	\item runs in quadratic time ``with respect to the number of expressions present in the source code or introduced during macro expansion''~\cite[p298]{Dybvig1992Syntactic}
+	\item doesnt address referential transparency?~\cite[p299]{Dybvig1992Syntactic}
+\end{itemize}
+
+
+
+
+
+\subsubsection*{Kohlbecker and Wand - Macro-by-Example: Deriving Syntactic Transformations from their Specifications (1987 POPL)}
+
+\paragraph{Motivation}
+\begin{itemize}
+	\item ``Even in languages such as Lisp that allow syntactic abstractions, the process of defining them is notoriously difficult and error-prone.''
+	\begin{itemize}
+		\item have to manually traverse syntax tree with cars and cdrs, or use quasiquoting
+	\end{itemize}
+\end{itemize}
+\paragraph{Contribution}
+\begin{itemize}
+	\item predecessor to \verb!syntax-rules! - allows specification of macros that looks like specification language in Scheme report (\verb!syntax-rules! first shows up as appendix in R4RS)
+	\item allows multiple cases, with fenders on each case
+	\item pattern matching with error checking
+	\item hygiene
+	\item ellipses for repetitive elements
+	\item formal semantics of MBE mechanism
+\end{itemize}
+\paragraph{Criticism}
+\begin{itemize}
+	\item needs separate ``low-level'' mechanism to express certain macros, like unhygienic behavior
+\end{itemize}
+
+\subsubsection*{Bawden and Rees - Syntactic Closures (1988 LFP)}
+\paragraph{Motivation}
+\begin{itemize}
+	\item ``All of these problems are consequences of the fact that macros are oblivious to the lexical scoping of hte program text that they are constructing.'' (p87)
+	\item ''Any macro facility that proposes to address this shortcoming also has to take into account that sometimes the macro writer needs explicit control over scoping. (example: catch/throw)''
+\end{itemize}
+\paragraph{Contribution}
+\begin{itemize}
+	\item ``In this paper, we present a solution to these scoping problems.'' (p87)
+	\item ``In the same way that closures of lambda-expressions solve scoping problems at run time, we propose to introduce syntactic closures as a way to solve scoping problems at macro expansion time.''
+	\item \verb!make-syntactic-closure!
+	\item instead of just working on syntax, macros work on syntax + lexical scoping information
+\end{itemize}
+\paragraph{Criticism}
+\begin{itemize}
+	\item ``The problem with syntactic closures is that they are inherently low-level and therefore difficult to use correctly, especially when syntactic keywords are not reserved. It is impossible to construct a pattern-based, automatically hygienic macro system on top of syntactic closures because the pattern interpreter must be able to determine the syntactic role of an identifier (in order to close it in the correct syntactic environment) before macro expansion has made that role apparent.'' (p155)
+	\item doesnt work with pattern matching - let example from~\cite[p157]{Clinger1991Macros} - can close val of env of use, but body must also include name of val
+	\item runs in quadratic time
+	\item ``forces the programmer to make explicit decisions about the resolution of free identifier references and the scope of identifier bindings $\ldots$ syntactic closures and their environments must be constructed explicitly. As a result, the mechanism is difficult to use and definitions created using it are hard to understand and verify.''~\cite[p299]{Dybvig1992Syntactic}
+	\item doesnt address referential transparency?~\cite[p299]{Dybvig1992Syntactic}
+\end{itemize}
+
+
+
+
+
+
+
+\subsubsection*{Clinger and Rees - Macros That Work (1991 POPL)}
+\paragraph{Motivation}
+\begin{itemize}
+	\item ``The reason that previous algorithms for hygienic macro expansion are quadratic in time is that they expand each use of a macro by performing naive expansion followed by an extra scan of the expanded code to find and paint (i.e. rename, or time-stamp) the newly introduced identifiers. If macros expand into uses of still other macros with more or less the same actual parameters, which often happens, then large fragments of code may be scanned anew each time a macro is expanded.'' (p158)
+\end{itemize}
+\paragraph{Contribution}
+\begin{itemize}
+	\item ``this paper unifies and extends the competing paradigms of hygienic macro expansion and syntactic closures to obtain an algorithm that combines the benefits of both.'' (p155)
+	\item ``Unlike previous algorithms, the algorithm runs in linear instead of quadratic time'' (p155)
+		\begin{itemize}
+			\item ``Our algorithm runs in linear time because it finds the newly introduced identifiers by scanning the rewrite rules, and paints these identifiers as they are introduced during macro expansion. The algorithm therefore scans the expanded code but once, for the purpose of completing the recursive expansion of the code tree, just as in the naive macro expansion algorithm.'' (p158)
+		\end{itemize}
+	\item ``Consider an analogy from lambda calculus. In reducing an expression to normal form by textual substitution, it is sometimes necessary to rename variables as part of a beta reduction. It doesn't work to perform all the (naive) beta reductions first, without renaming, and then to perform all the necessary alpha conversions; by then it is too late. Nor does it work to do all the alpha conversions first, because beta reductions introduce new opportunities for name clashes. The renamings must be \textit{interleaved} with the (naive) beta reductions, which is the reason why the notion of substitution required by the non-naive beta rule is so complicated. \\
+
+The same situation holds for macro expansions. It does not work to simply expand all macro calls and then rename variables, nor can the renamings be performed before expansion. The two processes must be interleaved in an appropriate manner. A correct and efficient realization of this interleaving is our primary contribution.'' (p157)
+\end{itemize}
+\paragraph{Criticism}
+\begin{itemize}
+	\item still needs low-level system to express certain macros - like when variable capture is desired
+\end{itemize}
+
+
+\subsubsection*{Dybvig, et al. - Syntactic Abstraction in Scheme (1992 LSC)}
+\subsubsection*{Dybvig - Writing Hygienic Macros in Scheme with Syntax-Case (1992, TechReport)}
+\paragraph{Motivation}
+\begin{itemize}
+	\item ``Lisp macro systems cannot track source code through the macro-expansion process. Reliable correlation of source code and macro-expanded code is necessary if the compiler, run-time system, and debugger are to communicate with the programmer in terms of the original source program.'' (p2)
+\end{itemize}
+\paragraph{Contribution}
+\begin{itemize}
+	\item ``maintains correlation between source and object code'' (p1)
+	\item syntax objects = syntax + lexical info + source locations
+	\item \verb!syntax-case! - allows use of high-level pattern language, but can also express macros that previously needed a separate low-level system
+\end{itemize}
+\paragraph{Criticism}
+\begin{itemize}
+	\item
+\end{itemize}
+
+
+
+\subsubsection*{Flatt - Composable and Compilable Macros (2002 ICFP)}
+\paragraph{Motivation}
+\begin{itemize}
+	\item ``Implementations tend to allow the mingling of compile-time values and run-time values, as well as values from separate compilations. Such mingling breaks programming tools that must parse code without executing it.'' (p1)
+	\item ``Advances in macro technology have simplified the creation of individual blocks for a tower, but they have not delivered a reliable mortar for assembling the blocks.'' (p1)
+	\item ``For macros to serve as reliable compiler extensions, the programming model must clearly separate the compile-time and run-time phases of all code at all times. The phases may be interleaved for interactive evaluation, but compiling new code must not affect the execution of previously compiled code. Similarly, the amount of interleaving should not matter: code should execute the same if it is compiled all in advance, if it is compiled with interleaved execution, or if half the code is compiled today and the rest is compiled on a different machine tomorrow. Finally, when a complete application is compiled, the programming environment should be able to strip all compile-time code from the final deliverable.'' (p2)
+\end{itemize}
+\paragraph{Contribution}
+\begin{itemize}
+	\item ``Module system avoids the problems of \verb!eval-when! by making module dependencies explicit (instead of relying on the side-effects of \verb!load!), and by distinguishing compile-time dependencies from run-time dependencies. Moreover, the macro system enforces a separation between different phases, ie, compile-time variables are never resolved to run-time values that happen to be loaded.'' (p2)
+	\item ``Tracking such dependencies requires an extension of previously known macro-expansion techniques. Our extension tracks the phase and phase-specific binding of each transformed identifier to resolve bindings correctly and at a well-defined time.'' (p2) 
+\end{itemize}
+\paragraph{Criticism}
+\begin{itemize}
+	\item
+\end{itemize}
+
+
+\subsubsection*{}
+\paragraph{Motivation}
+\begin{itemize}
+	\item
+\end{itemize}
+\paragraph{Contribution}
+\begin{itemize}
+	\item
+\end{itemize}
+\paragraph{Criticism}
+\begin{itemize}
+	\item
+\end{itemize}
+
 
 \cite{Kohlbecker1986Hygienic,Kohlbecker1987Macrobyexample,Bawden1988Syntactic,Clinger1991Macros,Dybvig1992Syntactic,Dybvig1992Writing,Flatt2002Composable,Culpepper2004Taming,Herman2008Theory,Culpepper2010Fortifying}
 \bibliographystyle{acm}
