@@ -11,6 +11,8 @@
   (make-object font% size MAIN-FONT-FACE 'swiss))
 (define (make-main-font-italic size)
   (make-object font% size MAIN-FONT-FACE 'swiss 'italic))
+(define (make-main-font-bold size)
+  (make-object font% size MAIN-FONT-FACE 'swiss 'normal 'bold))
 
 (define (make-tt-font size)
   (make-object font% size TT-FONT-FACE 'modern 'normal 'light))
@@ -39,6 +41,10 @@
   (text txt (make-main-font-italic size)))
 (define (it-small txt)
   (it txt MAIN-FONT-SIZE-SMALL))
+(define (bt txt [size TT-FONT-SIZE])
+  (text txt (make-main-font-bold size)))
+(define (bt-small txt)
+  (bt txt MAIN-FONT-SIZE-SMALL))
 (define (tt txt [size TT-FONT-SIZE])
   (text txt (make-tt-font size)))
 (define (tt-small txt)
@@ -215,6 +221,7 @@
 ;; ----------------------------------------------------------------------------
 ;; Slides start
 ;; ----------------------------------------------------------------------------
+(slide)
 (define (make-title-slide-content 
          spacer-txt1 super-txt1 spacer-txt2 super-txt2 title-txt)
   (list 
@@ -400,6 +407,7 @@
  (comment "")
  #:name "Naive Macro Expansion Problem: Hygiene"
  #:title "Naive Macro Expansion Problem: Hygiene"
+ (t "Macro Definition:")  
  (vl-append
  (tt "(or e1 e2)")
  (hb-append (tt "     ") (tt "≡"))
@@ -407,15 +415,16 @@
  (tt "  (if v v e2))"))
  'next
  (blank)
- (blank)
+ (t "Macro Use:")
  (vl-append
-  (tt "(define v true)")
-  (tt "(or false v)"))
+  (tt "(let ([v true]))")
+  (tt "  (or false v)"))
  'next
  (t-small "macro expands to")
  (vl-append
-  (tt "(define v true)")
-  (tt "(let ([v false]) (if v v v))"))
+  (tt "(let ([v true])")
+  (tt "  (let ([v false])")
+  (tt "    (if v v v))"))
  'next
  'alts
  (list
@@ -544,6 +553,12 @@
 
 
 
+
+
+
+
+
+
 ;; ----------------------------------------------------------------------------
 ;; Clinger, Rees - Macros That Work
 
@@ -605,11 +620,6 @@
  (my-para-small "\"The same situation holds for macro expansions. It does not work to simply expand all macro calls and then rename variables, nor can the renamings be performed before expansion. The two processes must be interleaved in an appropriate manner. A correct and efficient realization of this interleaving is our primary contribution.\""))
 
 
-(slide
- (comment "")
- #:name Clinger1991
- (citation Clinger1991)
- (my-para-small "\"A high-level macro system similar to that described here is currently implemented on top of a compatible low-level system that is not described in this paper.\""))
 
 
 ;; Naive Macro Expansion Problem: Referential Transparency
@@ -617,7 +627,46 @@
  (comment "")
  #:name "Naive Macro Expansion Problem: Referential Transparency"
  #:title "Naive Macro Expansion Problem: Referential Transparency"
+ (t "Macro Definition:")  
+ (vl-append
+  (tt "(or e1 e2)")
+  (hb-append (tt "     ") (tt "≡"))
+  (tt "(let ([v e1])")
+  (tt "  (if v v e2))"))
+ 'next
+ (blank)
+ (t "Macro Use:")
+ (vl-append
+  (tt "(let ([if and]))")
+  (tt "  (or false true)"))
+ 'next
+ (t-small "macro expands to")
+ (vl-append
+  (tt "(let ([if and])")
+  (tt "  (let ([v false])")
+  (tt "    (if v v true))"))
 )
+
+
+(slide
+ (comment "emphasis mine")
+ #:name Clinger1991
+ (citation Clinger1991)
+ (my-para-small "\"We would like for free variables that occur on the right hand side of a rewriting rule for a macro to be resolved in the lexical environment of the macro" (bt-small "definition") "instead of being resolved in the lexical environment of the" (bt-small "use") "of the macro.\"")
+ 'next
+ (my-para-small #:fill? #f "...")
+ (my-para-small "\"Our algorithm supports referentially transparent macros.\""))
+
+
+
+(slide
+ (comment "")
+ #:name Clinger1991
+ (citation Clinger1991)
+ (my-para-small "\"A high-level macro system similar to that described here is currently implemented on top of a compatible low-level system that is not described in this paper.\""))
+
+
+
 
 ;; ----------------------------------------------------------------------------
 ;; Dybvig, Hieb, Bruggeman - Syntactic Abstraction in Scheme, 1992 LSC

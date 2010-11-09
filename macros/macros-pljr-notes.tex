@@ -127,7 +127,9 @@
 	\item ``In the same way that closures of lambda-expressions solve scoping problems at run time, we propose to introduce syntactic closures as a way to solve scoping problems at macro expansion time.''
 	\item \verb!make-syntactic-closure!
 	\item instead of just working on syntax, macros work on syntax + lexical scoping information
+	\item ``Bawden and Rees approach the capturing problem from a different angle. Rather than providing automatic hygiene, their system forces the programmer to make explicit decisions about the resolution of free identifier references and the scope of the identifier bindings. Borrowing from the notion that procedures can be represented by \textit{closures} that encapsulate lexical environments, they allow the programmer to create \textit{syntactic closures} that encapsulate syntactic environments. The result is a system that allows the programmer to avoid unwanted capturing. Unlike traditional closures, however, syntactic closures and their environments must be constructed explicitly. As a result, the mechanism is difficult to use and definitions created using it are hard to understand and verify. Hanson alleviates this problem somewhat by demonstrating that the restricted high-level specification language supported by Clinger and Rees can be built on top of an extended version of syntactic closures.''\cite[p298-299]{Dybvig1992Syntactic}
 \end{itemize}
+
 \paragraph{Criticism}
 \begin{itemize}
 	\item ``The problem with syntactic closures is that they are inherently low-level and therefore difficult to use correctly, especially when syntactic keywords are not reserved. It is impossible to construct a pattern-based, automatically hygienic macro system on top of syntactic closures because the pattern interpreter must be able to determine the syntactic role of an identifier (in order to close it in the correct syntactic environment) before macro expansion has made that role apparent.'' (p155)
@@ -148,6 +150,7 @@
 \begin{itemize}
 	\item ``The reason that previous algorithms for hygienic macro expansion are quadratic in time is that they expand each use of a macro by performing naive expansion followed by an extra scan of the expanded code to find and paint (i.e. rename, or time-stamp) the newly introduced identifiers. If macros expand into uses of still other macros with more or less the same actual parameters, which often happens, then large fragments of code may be scanned anew each time a macro is expanded.'' (p158)
 \end{itemize}
+
 \paragraph{Contribution}
 \begin{itemize}
 	\item ``this paper unifies and extends the competing paradigms of hygienic macro expansion and syntactic closures to obtain an algorithm that combines the benefits of both.'' (p155)
@@ -158,10 +161,14 @@
 	\item ``Consider an analogy from lambda calculus. In reducing an expression to normal form by textual substitution, it is sometimes necessary to rename variables as part of a beta reduction. It doesn't work to perform all the (naive) beta reductions first, without renaming, and then to perform all the necessary alpha conversions; by then it is too late. Nor does it work to do all the alpha conversions first, because beta reductions introduce new opportunities for name clashes. The renamings must be \textit{interleaved} with the (naive) beta reductions, which is the reason why the notion of substitution required by the non-naive beta rule is so complicated. \\
 
 The same situation holds for macro expansions. It does not work to simply expand all macro calls and then rename variables, nor can the renamings be performed before expansion. The two processes must be interleaved in an appropriate manner. A correct and efficient realization of this interleaving is our primary contribution.'' (p157)
+	\item ``Clinger and Rees present an algorithm for hygienic macro transformations that does not have the quadratic time complexity of the KFFD algorithm. Their algorithm marks only the new identifiers introduced at each iteration of the macro transformation process, rather than all of the identifiers as in the KFFD algorithm.''~\cite[p298]{Dybvig1992Syntactic}
 \end{itemize}
+
 \paragraph{Criticism}
 \begin{itemize}
 	\item still needs low-level system to express certain macros - like when variable capture is desired
+	\item low level system doesnt support referential transparency~\cite[p299]{Dybvig1992Syntactic}
+	\item ``Their system, however, allows macros to be written only in a restricted high-level specification language in which it is easy to determine where new identifiers will appear in the output of a macro. Since some macros cannot be expressed using this language, they have developed a low-level interface that requires new identifiers to be marked explicitly.''~\cite[p298-299]{Dybvig1992Syntactic}
 \end{itemize}
 
 
