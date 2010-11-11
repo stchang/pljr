@@ -217,6 +217,8 @@
   "Dybvig, Hieb, Bruggeman - \"Syntactic Abstraction in Scheme\", 1992 LSC")
 (define Dybvig1992b
   "Dybvig - \"Writing Hygienic Macros in Scheme with Syntax-Case\", 1992 IU TechReport")
+(define Flatt2002
+  "Flatt - \"Composable and Compilable Macros\", 2002 ICFP")
 
 ;; ----------------------------------------------------------------------------
 ;; Slides start
@@ -274,21 +276,28 @@
 
 
 ;When To Use Macros
+(let ([felleisen (rectangle 10 10) #;(bitmap "felleisen.jpg")])
 (slide
- (comment "A common question asked about macros is: can't I just use functions to do anything macros can do?")
+ (comment "The last point can be anything from making syntax prettier and more concise, to developing a full blown DSL. At its root, languages, programming or otherwise, are about efficient communication. And as many language designers (again, programming or otherwise) have observed, when faced with a task, it's often most efficient to just develop your own language. In fact, most programming languages were developed for a very specific task in mind (C for unix, Java for the web, etc). So philosophy of a language like Lisp or Scheme (and Racket) is to have a very small but expressive core, and then have powerful language extension mechanisms (ie - macros) so that it's really easy to customize the language to suite your needs. If you've ever read Paul Graham's essay called 'Beating The Averages', he basically credits his success with his startup Viaweb, which was acquired by Yahoo and is now Yahoo Stores, to macros.")
  #:name "When To Use Macros"
  (t "Can't I just use functions to do anything macros can do?")
  'next
- (hc-append (bitmap "felleisen.jpg") (t " --- NO!"))
+ 'alts
+ (list
+  (list (hc-append felleisen (ghost (t " --- NO!"))))
+  (list (hc-append felleisen (t " --- NO!"))))
  'next
  (para #:align 'left "When To Use a Macro Instead of a Function:")
  'next
+ (item "To use a different order of evaluation")
+ 'next
  (item "To introduce new binding constructs")
  'next
- (item "When the order of evaluation must be changed")
- 'next
- (item "To introduce new syntax / define new DSLs")
- )
+ 'alts
+ (list
+  (list (item "To introduce new syntax"))
+  (list (item "To introduce new syntax / define new DSLs")))
+ ))
 
 ; make-macro-examples-slide
 (define (make-macro-examples-slide
@@ -316,7 +325,8 @@
 
 ; Macro Examples: New Syntax
 (make-macro-examples-slide
- ""
+ ; comments
+ "For now, I've used the equivalence operator to represent macro definition. Later, I'll introduce actual concrete ways of defining macros."
  "New Syntax"
  (vl-append
   (tt "(cond")
@@ -391,13 +401,13 @@
 
 
 
-; Naive Macro Expansion
+; Naive Macro Expansion Algorithm
 (slide
  (comment "")
- #:name "Naive Macro Expansion"
- #:title "Naive Macro Expansion"
+ #:name "Naive Macro Expansion Algorithm"
+ #:title "Naive Macro Expansion Algorithm"
  (vl-append
-  (t "1) find all macro calls in a program and expand")
+  (t "1) find all macro calls in a program and expand (transcription)")
   (t "2) repeat with expanded program until there are no more macro calls"))
  'next
  (t "Used in languages like C and Lisp"))
@@ -417,8 +427,8 @@
  (blank)
  (t "Macro Use:")
  (vl-append
-  (tt "(let ([v true]))")
-  (tt "  (or false v)"))
+  (tt "(let ([v true])")
+  (tt "  (or false v))"))
  'next
  (t-small "macro expands to")
  (vl-append
@@ -448,7 +458,11 @@
  'next
  (subitem (tt "____dont_use_me_as_a_variable___"))
  'next
- (item "The programmer should just be careful"))
+ (item "The programmer should just be careful")
+ 'next
+ (blank)
+ (blank)
+ (frame (t "Bigger Problem: Programmer has to deal with this crap")))
 
 ;; ----------------------------------------------------------------------------
 ;;Kohlbecker, Friedman, Felleisen, Duba - Hygienic Macro Expansion
@@ -457,13 +471,19 @@
  (comment "")
  #:name Kohlbecker1986
  (citation Kohlbecker1986)
- (my-para-small "\"... the task of safely renaming macro-generated identifiers is mechanical. It is essentially an α-conversion which is knowledgeable about the origin of identifiers. For these reasons we propose a change to the naive macro expansion algorithm which automatically maintains hygienic conditions during expansion time.\""))
+ (my-para-small "\"... we propose a change to the naive macro expansion algorithm which automatically maintains hygienic conditions during expansion time.\""))
+
+(slide
+ (comment "")
+ #:name Kohlbecker1986
+ (citation Kohlbecker1986)
+ (my-para-small "\"... the task of safely renaming macro-generated identifiers is mechanical. It is essentially an α-conversion which is knowledgeable about the origin of identifiers. ... From the λ-calculus, one knows that if the hygiene condition does not hold, it can be established by an appropriate number of α-conversions. That is also the basis of our solution.\""))
 
 (slide
  (comment "Can't apply α-conversions at every step because 1) you dont know that user context, and 2) there may be future expansions that still capture your generated variable")
  #:name Kohlbecker1986
  (citation Kohlbecker1986)
- (my-para-small "\"From the λ-calculus, one knows that if the hygiene condition does not hold, it can be established by an appropriate number of α-conversions. That is also the basis of our solution. Ideally, α-conversions should be applied with every transformation step, but that is impossible. One cannot know in advance which macro-generated identifier will end up in a binding position Hence it is a quite natural requirement that one retains the information about the origin of an identifier. To this end, we combine the expansion algorithm with a tracking mechanism.\""))
+ (my-para-small "\"Ideally, α-conversions should be applied with every transformation step, but that is impossible. One cannot know in advance which macro-generated identifier will end up in a binding position Hence it is a quite natural requirement that one retains the information about the origin of an identifier. To this end, we combine the expansion algorithm with a tracking mechanism.\""))
 
 (slide
  (comment "")
@@ -473,8 +493,8 @@
 
 (slide
  (comment "")
- #:title "Algorithm"
- #:name Kohlbecker1986
+ #:title "KFFD Algorithm"
+ #:name "KFFD Algorithm"
  (citation Kohlbecker1986)
  (my-para-small "1) stamp all variables in initial program with time-stamp 0")
  (my-para-small "2) do macro expansion")
@@ -485,17 +505,27 @@
 
 (slide
  (comment "")
- #:title "Algorithm Example"
- #:name Kohlbecker1986
+ #:title "KFFD Algorithm Example"
+ #:name "KFFD Algorithm Example"
  (citation Kohlbecker1986)
+ (t "Macro Definition:")  
  (vl-append
-  (tt "(define v true)")
-  (tt "(or false v)"))
+  (tt "(or e1 e2)")
+  (hb-append (tt "     ") (tt "≡"))
+  (tt "(let ([v e1])")
+  (tt "  (if v v e2))"))
+ 'next
+ (blank)
+ (t "Macro Use:")
+ (vl-append
+  (tt "(let ([v true])")
+  (tt "  (or false v))"))
  'next
  (t-small "macro expands to")
  (vl-append
-  (tt "(define v:0 true)")
-  (tt "(let ([v:1 false]) (if v:1 v:1 v:0))")))
+  (tt "(let ([v:0 true0])")
+  (tt "  (let ([v:1 false])")
+  (tt "    (if v:1 v:1 v:0)))")))
 
 ;; ----------------------------------------------------------------------------
 ;; Kohlbecker, Wand - Macro-by-Example: Deriving Syntactic Transformations from their Specifications, 1987 POPL
@@ -506,12 +536,42 @@
  (citation Kohlbecker1987)
  (my-para-small "\"Even in languages such as Lisp that allow syntactic abstractions, the process of defining them is notoriously difficult and error-prone.\""))
 
+(slide 
+ (comment "Used to have to manually traverse syntax tree with cars and cdrs, or use quasiquoting")
+ #:name "Lisp let Example"
+ #:title (hb-append (t "Lisp ") (tt "let") (t " Example"))
+ (citation Kohlbecker1987)
+ (tt "let")
+ (tt "≡")
+ (vl-append
+  (tt "(lambda (s)")
+  (tt "  (cons")
+  (tt "    (cons 'lambda")
+  (tt "           ((cons (map car (cadr s))")
+  (tt "                  (cddr s)))")
+  (tt "    (map cadr (cadr s))))"))
+ 'next
+ (tt "≡")
+ (vl-append
+  (tt "(defmacro let (decls . body)")
+  (tt "  '((lambda ,(map car decls) . ,body)")
+  (tt "    . ,(map cadr decls)))"))
+)
+ 
 (slide
  (comment "Used to have to manually traverse syntax tree with cars and cdrs, or use quasiquoting. syntax-rules first appeared in the Scheme Report as an appendix to R4RS in 1991, and became officially a part of the Scheme specification in R5RSin 1998")
  #:title "Contributions"
  #:name Kohlbecker1987
  (citation Kohlbecker1987)
- (my-para-small "predecessor to" (tt-small "syntax-rules") " - allows definition of macros that resembles specification language")
+ 'alts
+ (list
+  (list
+   (hb-append (t-small "Much Better Way: ") (ghost (frame (tt "syntax-rules")))))
+   (list
+    (hb-append (t-small "Much Better Way: ") (frame (tt "syntax-rules")))))
+ 'next
+ (t-small "(predecessor to)")
+ 'next
  (item "pattern matching")
  (item "ellipses matches repetitive elements")
  (item "multiple cases")
@@ -521,15 +581,15 @@
 ; syntax-rules example - named let??? (named let needs capturing???)
 (slide
  (comment "")
- #:name "syntax-rules example"
- #:title (hb-append (tt "syntax-rules") (t " example")))
+ #:name "syntax-rules examples"
+ #:title (hb-append (tt "syntax-rules") (t " examples")))
 
 
 
 ;; ----------------------------------------------------------------------------
 ;; Bawden, Rees - Syntactic Closures
 (slide
- (comment "")
+ (comment "Getting back to macro hygiene")
  #:name Bawden1988
  (citation Bawden1988)
  (my-para-small "\"\"Hygienic macro expansion\" (of Kohlbecker, et al.) is the only other complete solution to the macro scoping problems of which we are aware. Hygienic expansion works by \"painting\" the entire input expression with some distinctive color before passing it in to the expander. Then the returned replacement expression is examined to find those parts that originated from the input expression; these can be identified by their color. The names in the unpainted text are protected from capture by the painted text, and vice versa.\""))
@@ -546,10 +606,12 @@
 
 
 (slide
- (comment "Instead of just operating on syntax, macros now work on syntax + lexical scoping information.")
+ (comment "Instead of just operating on syntax, macros now work on syntax + lexical scoping information. Algorithm not automatic -- forces programmers to make decisions.")
  #:name Bawden1988
  (citation Bawden1988)
- (my-para-small "\"In the same way that closures of lambda-expressions solve scoping problems at run time, we propose to introduce syntactic closures as a way to solve scoping problems at macro-expansion time.\""))
+ (my-para-small "\"In the same way that closures of lambda-expressions solve scoping problems at run time, we propose to introduce syntactic closures as a way to solve scoping problems at macro-expansion time.\"")
+ 'next
+ (t "syntactic closures = syntax + lexical information"))
 
 
 
@@ -566,7 +628,7 @@
  (comment "")
  #:name Clinger1991
  (citation Clinger1991)
- (my-para-small "\"The problem with syntactic closures is that they are inherently low-level and therefore difficult to use correctly, especially when syntactic keywords are not reserved. It is impossible to construct a pattern-based, automatically hygienic macro system on top of syntactic closures because the pattern interpreter must be able to determine the syntactic role of an identifier (in order to close it in the correct syntactic environment) before macro expansion has made that role apparent.\""))
+ (my-para-small "\"The problem with syntactic closures is that they are inherently low-level and therefore difficult to use correctly ... It is impossible to construct a pattern-based, automatically hygienic macro system on top of syntactic closures because the pattern interpreter must be able to determine the syntactic role of an identifier (in order to close it in the correct syntactic environment) before macro expansion has made that role apparent.\""))
 
 (let ([val-colored (colorize (tt "val") "green")]
       [x-colored (colorize (tt "x") "red")]
@@ -617,6 +679,7 @@
  #:name Clinger1991
  (citation Clinger1991)
  (my-para-small "\"Consider an analogy from lambda calculus. In reducing an expression to normal form by textual substitution, it is sometimes necessary to rename variables as part of a beta reduction. It doesn't work to perform all the (naive) beta reductions first, without renaming, and then to perform all the necessary alpha conversions; by then it is too late. Nor does it work to do all the alpha conversions first, because beta reductions introduce new oppotunities for name clashes. The renamings must be" (it-small "interleaved") "with the (naive) beta reductions, which is the reason why the notion of substitution required by the non-naive beta rule is so complicated.\"")
+ 'next
  (my-para-small "\"The same situation holds for macro expansions. It does not work to simply expand all macro calls and then rename variables, nor can the renamings be performed before expansion. The two processes must be interleaved in an appropriate manner. A correct and efficient realization of this interleaving is our primary contribution.\""))
 
 
@@ -673,25 +736,74 @@
 ;; Dybvig - Writing Hygienic Macros in Scheme with Syntax-Case, 1992 IU TechReport
 
 (slide
+ (comment "Clinger, Rees low level system not referentially transparent, pattern matching, etc.")
+ #:name Dybvig1992a
+ (citation Dybvig1992a)
+ #;(citation Dybvig1992b)
+ (my-para-small "\"Their system, however, allows macros to be written only in a restricted high-level specification language in which it is easy to determine where new identifiers will appear in the output of a macro. Since some macros cannot be expressed using this language, they have developed a low-level interface that requires new identifiers to be marked explicitly.\""))
+
+(slide
  (comment "")
  #:name Dybvig1992a
  (citation Dybvig1992a)
- (citation Dybvig1992b))
+ #;(citation Dybvig1992b)
+ (my-para-small "\"Lisp macro systems cannot track source code through the macro-expansion process. Reliable correlation of course code and macro-expanded code is necessary if the compiler, run-time system, and debugger are to communicate with the programm in terms of the original source program.\""))
 
 (slide
  (comment "")
  #:title "Contributions"
  #:name Dybvig1992a
  (citation Dybvig1992a)
- (citation Dybvig1992b)
- (item "syntax-case")
+ #;(citation Dybvig1992b)
+ (frame (tt "syntax-case"))
  (subitem "combines high-level and low-level systems - can write unhygienic macros")
  (subitem "referential transparency")
- (subitem "syntax objects = syntax + lexical info + source locations"))
+ (subitem "allows matching of source code to expanded code")
+ 'next
+ (t "syntax object = syntax + lexical information + source locations"))
+
+(slide 
+ (comment "")
+ #:name "syntax-case examples"
+ #:title (hb-append (tt "syntax-case") (t " examples")))
+
+
+;; ----------------------------------------------------------------------------
+;; Flatt - Composable and Compilable Macros: You Want it When?
+(slide
+ (comment "")
+ #:name Clinger1991
+ (citation Clinger1991)
+ (my-para-small "\"One project we intend to pursue is to integrate our algorithm with a module system for Scheme.\""))
 
 (slide
  (comment "")
- #:name Dybvig1992a
- (citation Dybvig1992a)
- (citation Dybvig1992b)
- (my-para-small "\"Lisp macro systems cannot track source code through the macro-expansion process. Reliable correlation of course code and macro-expanded code is necessary if the compiler, run-time system, and debugger are to communicate with the programm in terms of the original source program.\""))
+ #:name Flatt2002
+ (citation Flatt2002)
+ (my-para-small "\"In the Lisp and Scheme tradition, where macros are themselves defined in a macro-extensible language, extensions can be stacked in a \"language tower.\" Each extension of the language can be used in implementing the next extension. ... Advances in macro technology have simplified the creation of individual blocks for a tower, but they have not delivered a reliable mortar for assembling the blocks."))
+
+(define Pscm (tt-small "P.scm"))
+(define Escm (tt-small "E.scm"))
+(define loadPscm (tt-small "loadP.scm"))
+
+(slide
+ (comment "")
+ #:name Flatt2002
+ (citation Flatt2002)
+ (my-para-small "\"Suppose" Pscm "is implemented in an extension of Scheme," (it-small "E") ", where" (it-small "E") "is implemented by" Escm "directly in Scheme. A typical load sequence for" (it-small "P") "is")
+ (tt "(load \"E.scm\")")
+ (tt "(load \"P.scm\")")
+ (my-para-small "The above statements might be placed in a file" loadPscm ", which can then be submitted to be a Scheme interpreter to execute" Pscm "successfully.\""))
+
+(slide
+ (comment "Can decorate load with eval-when -- relies on programmer in implement fragile solution.")
+ #:name Flatt2002
+ (citation Flatt2002)
+ (my-para-small "\"The problem starts when the programmer tries to compile the program for later execution. Supplying" loadPscm "to the compiler is useless, because the result is simply the compiled form of two" (tt "load") "statements. A full compiler will be needed at run-time when" Pscm "is actually loaded.\"")
+ 'next
+ (my-para-small "\"The problem is that the compile-time code in" Escm "is not distinguished in any way from the run-time code in" Pscm ", and the run-time" (tt "load") "operation is abused as a configuration-time operation.\""))
+
+(slide
+ (comment "")
+ #:name Flatt2002
+ #:title "Examples Showing Phases in Racket")
