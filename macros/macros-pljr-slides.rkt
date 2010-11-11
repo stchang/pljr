@@ -196,14 +196,15 @@
 (define (make-title title-txt) (colorize (t title-txt) "blue"))
 
 
-
+(define (dim p [dimness 2])
+  (colorize p (scale-color dimness "black")))
 ;; citation : String -> Pict
 ;; Adds brackets to given string and converts to pict of font-size 24,
 ;; using gray color
 (define (citation ref [font-size MAIN-FONT-SIZE-SMALL])
-  (colorize 
+  (dim
    (t (string-append "[" ref "]") font-size)
-   (scale-color 1.3 "black")))
+  1.3))
 
 (define Kohlbecker1986 
   "Kohlbecker, Friedman, Felleisen, Duba - \"Hygienic Macro Expansion\", 1986 LFP")
@@ -219,6 +220,8 @@
   "Dybvig - \"Writing Hygienic Macros in Scheme with Syntax-Case\", 1992 IU TechReport")
 (define Flatt2002
   "Flatt - \"Composable and Compilable Macros\", 2002 ICFP")
+(define Culpepper2010
+  "Culpepper - \"Fortifying Macros\", 2010 ICFP")
 
 ;; ----------------------------------------------------------------------------
 ;; Slides start
@@ -278,9 +281,9 @@
 ;When To Use Macros
 (let ([felleisen (rectangle 10 10) #;(bitmap "felleisen.jpg")])
 (slide
- (comment "The last point can be anything from making syntax prettier and more concise, to developing a full blown DSL. At its root, languages, programming or otherwise, are about efficient communication. And as many language designers (again, programming or otherwise) have observed, when faced with a task, it's often most efficient to just develop your own language. In fact, most programming languages were developed for a very specific task in mind (C for unix, Java for the web, etc). So philosophy of a language like Lisp or Scheme (and Racket) is to have a very small but expressive core, and then have powerful language extension mechanisms (ie - macros) so that it's really easy to customize the language to suite your needs. If you've ever read Paul Graham's essay called 'Beating The Averages', he basically credits his success with his startup Viaweb, which was acquired by Yahoo and is now Yahoo Stores, to macros.")
+ (comment "The last point can be anything from making syntax prettier and more concise, to developing a full blown DSL. At its root, languages, programming or otherwise, are about efficient communication. And as many language designers (again, programming or otherwise) have observed, when faced with a task, it's often most efficient to just develop your own language. In fact, most programming languages were developed for a very specific task in mind (C for unix, Java for the web, etc). So philosophy of a language like Lisp or Scheme (and Racket) is to have a very small but expressive core, and then have powerful language extension mechanisms (ie - macros) so that it's really easy to customize the language to suite your needs. If you've ever read Paul Graham's essay called 'Beating The Averages', he basically credits his success with his startup Viaweb, which was acquired by Yahoo and is now Yahoo Stores, to macros. Funny story ...")
  #:name "When To Use Macros"
- (t "Can't I just use functions to do anything macros can do?")
+ (t "Q: Can't I just use functions to do anything macros can do?")
  'next
  'alts
  (list
@@ -408,8 +411,10 @@
  #:title "Naive Macro Expansion Algorithm"
  (vl-append
   (t "1) find all macro calls in a program and expand (transcription)")
+  (t "")
   (t "2) repeat with expanded program until there are no more macro calls"))
  'next
+ (blank)
  (t "Used in languages like C and Lisp"))
 
 ; Naive Macro Expansion Problem: Hygiene
@@ -471,6 +476,7 @@
  (comment "")
  #:name Kohlbecker1986
  (citation Kohlbecker1986)
+ 'next
  (my-para-small "\"... we propose a change to the naive macro expansion algorithm which automatically maintains hygienic conditions during expansion time.\""))
 
 (slide
@@ -483,7 +489,7 @@
  (comment "Can't apply α-conversions at every step because 1) you dont know that user context, and 2) there may be future expansions that still capture your generated variable")
  #:name Kohlbecker1986
  (citation Kohlbecker1986)
- (my-para-small "\"Ideally, α-conversions should be applied with every transformation step, but that is impossible. One cannot know in advance which macro-generated identifier will end up in a binding position Hence it is a quite natural requirement that one retains the information about the origin of an identifier. To this end, we combine the expansion algorithm with a tracking mechanism.\""))
+ (my-para-small "\"Ideally, α-conversions should be applied with every transformation step, but that is impossible. One cannot know in advance which macro-generated identifier will end up in a binding position. Hence it is a quite natural requirement that one retains the information about the origin of an identifier. To this end, we combine the expansion algorithm with a tracking mechanism.\""))
 
 (slide
  (comment "")
@@ -530,34 +536,53 @@
 ;; ----------------------------------------------------------------------------
 ;; Kohlbecker, Wand - Macro-by-Example: Deriving Syntactic Transformations from their Specifications, 1987 POPL
 
-(slide
- (comment "Used to have to manually traverse syntax tree with cars and cdrs, or use quasiquoting")
- #:name Kohlbecker1987
- (citation Kohlbecker1987)
- (my-para-small "\"Even in languages such as Lisp that allow syntactic abstractions, the process of defining them is notoriously difficult and error-prone.\""))
 
+(let
+    ([lisp-let-macro1
+      (vl-append
+       (tt "(lambda (s)")
+       (tt "  (cons")
+       (tt "    (cons 'lambda")
+       (tt "           ((cons (map car (cadr s))")
+       (tt "                  (cddr s)))")
+       (tt "    (map cadr (cadr s))))"))]
+     [lisp-let-macro2
+      (vl-append
+       (tt "(defmacro let (decls . body)")
+       (tt "  '((lambda ,(map car decls) . ,body)")
+       (tt "    . ,(map cadr decls)))"))])
 (slide 
  (comment "Used to have to manually traverse syntax tree with cars and cdrs, or use quasiquoting")
  #:name "Lisp let Example"
  #:title (hb-append (t "Lisp ") (tt "let") (t " Example"))
- (citation Kohlbecker1987)
+ #;(citation Kohlbecker1987)
  (tt "let")
- (tt "≡")
- (vl-append
-  (tt "(lambda (s)")
-  (tt "  (cons")
-  (tt "    (cons 'lambda")
-  (tt "           ((cons (map car (cadr s))")
-  (tt "                  (cddr s)))")
-  (tt "    (map cadr (cadr s))))"))
  'next
- (tt "≡")
- (vl-append
-  (tt "(defmacro let (decls . body)")
-  (tt "  '((lambda ,(map car decls) . ,body)")
-  (tt "    . ,(map cadr decls)))"))
-)
+ 'alts
+ (list
+  (list
+   (vc-append
+    (tt "≡")
+    lisp-let-macro1
+    (t "")
+    (ghost (tt "≡"))
+    (ghost lisp-let-macro2)))
+  (list
+   (vc-append
+    (dim (tt "≡"))
+    (dim lisp-let-macro1)
+    (t "")
+    (tt "≡")
+    lisp-let-macro2)))
+ ))
  
+(slide
+ (comment "I said I would discuss actual ways for defining macros. At the time of these papers, Lisp had macros, but they were tedious to define. Used to have to manually traverse syntax tree with cars and cdrs, or use quasiquoting")
+ #:name Kohlbecker1987
+ (citation Kohlbecker1987)
+ 'next
+ (my-para-small "\"Even in languages such as Lisp that allow syntactic abstractions, the process of defining them is notoriously difficult and error-prone.\""))
+
 (slide
  (comment "Used to have to manually traverse syntax tree with cars and cdrs, or use quasiquoting. syntax-rules first appeared in the Scheme Report as an appendix to R4RS in 1991, and became officially a part of the Scheme specification in R5RSin 1998")
  #:title "Contributions"
@@ -592,6 +617,7 @@
  (comment "Getting back to macro hygiene")
  #:name Bawden1988
  (citation Bawden1988)
+ 'next
  (my-para-small "\"\"Hygienic macro expansion\" (of Kohlbecker, et al.) is the only other complete solution to the macro scoping problems of which we are aware. Hygienic expansion works by \"painting\" the entire input expression with some distinctive color before passing it in to the expander. Then the returned replacement expression is examined to find those parts that originated from the input expression; these can be identified by their color. The names in the unpainted text are protected from capture by the painted text, and vice versa.\""))
 
 (slide
@@ -628,6 +654,7 @@
  (comment "")
  #:name Clinger1991
  (citation Clinger1991)
+ 'next
  (my-para-small "\"The problem with syntactic closures is that they are inherently low-level and therefore difficult to use correctly ... It is impossible to construct a pattern-based, automatically hygienic macro system on top of syntactic closures because the pattern interpreter must be able to determine the syntactic role of an identifier (in order to close it in the correct syntactic environment) before macro expansion has made that role apparent.\""))
 
 (let ([val-colored (colorize (tt "val") "green")]
@@ -740,6 +767,7 @@
  #:name Dybvig1992a
  (citation Dybvig1992a)
  #;(citation Dybvig1992b)
+ 'next
  (my-para-small "\"Their system, however, allows macros to be written only in a restricted high-level specification language in which it is easy to determine where new identifiers will appear in the output of a macro. Since some macros cannot be expressed using this language, they have developed a low-level interface that requires new identifiers to be marked explicitly.\""))
 
 (slide
@@ -747,7 +775,7 @@
  #:name Dybvig1992a
  (citation Dybvig1992a)
  #;(citation Dybvig1992b)
- (my-para-small "\"Lisp macro systems cannot track source code through the macro-expansion process. Reliable correlation of course code and macro-expanded code is necessary if the compiler, run-time system, and debugger are to communicate with the programm in terms of the original source program.\""))
+ (my-para-small "\"Lisp macro systems cannot track source code through the macro-expansion process. Reliable correlation of course code and macro-expanded code is necessary if the compiler, run-time system, and debugger are to communicate with the program in terms of the original source program.\""))
 
 (slide
  (comment "")
@@ -756,9 +784,10 @@
  (citation Dybvig1992a)
  #;(citation Dybvig1992b)
  (frame (tt "syntax-case"))
- (subitem "combines high-level and low-level systems - can write unhygienic macros")
+ (subitem "combines high-level and low-level systems")
+ (subitem "(can write unhygienic macros)")
  (subitem "referential transparency")
- (subitem "allows matching of source code to expanded code")
+ (subitem "source code matched to expanded code")
  'next
  (t "syntax object = syntax + lexical information + source locations"))
 
@@ -780,6 +809,7 @@
  (comment "")
  #:name Flatt2002
  (citation Flatt2002)
+ 'next
  (my-para-small "\"In the Lisp and Scheme tradition, where macros are themselves defined in a macro-extensible language, extensions can be stacked in a \"language tower.\" Each extension of the language can be used in implementing the next extension. ... Advances in macro technology have simplified the creation of individual blocks for a tower, but they have not delivered a reliable mortar for assembling the blocks."))
 
 (define Pscm (tt-small "P.scm"))
@@ -806,4 +836,14 @@
 (slide
  (comment "")
  #:name Flatt2002
- #:title "Examples Showing Phases in Racket")
+ #:title "Phase Examples in Racket")
+
+
+;; ----------------------------------------------------------------------------
+;; Culpepper - Fortifying Macros, 2010 ICFP
+(slide
+ (comment "")
+ #:name Culpepper2010
+ (citation Culpepper2010)
+ 'next
+ (my-para-small ""))
