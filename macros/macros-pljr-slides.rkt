@@ -65,6 +65,20 @@
          ([current-main-font (make-main-font MAIN-FONT-SIZE-SMALL)])
        (para . exprs))]))
 
+(define-syntax (my-code stx)
+  (syntax-case stx ()
+    [(_ . exprs)
+     #`(parameterize 
+           ([current-font-size MAIN-FONT-SIZE])
+         (code . exprs))]))
+(define-syntax (my-code-small stx)
+  (syntax-case stx ()
+    [(_ . exprs)
+     #`(parameterize 
+         ([current-font-size MAIN-FONT-SIZE-SMALL])
+       (code . exprs))]))
+
+
 ;; Pict -> Pict
 ;; Creates a new instance of a pict
 ;; For when you need a unique instance of a pict like when using pin-arrow-line
@@ -363,18 +377,18 @@
  "New Binding Construct"
  (hb-append
   (tt "(let ([")
-  (colorize (tt "x ") "red")
-  (colorize (tt "val") "green")
+  (colorize (tt "var ") "red")
+  (colorize (tt "rhs") "green")
   (tt "] ...) ")
   (colorize (tt "body") "blue")
   (tt ")"))
  (hb-append
   (tt "((λ (")
-  (colorize (tt "x ...") "red")
+  (colorize (tt "var ...") "red")
   (tt ") ")
   (colorize (tt "body") "blue")
   (tt ") ")
-  (colorize (tt "val ...") "green")
+  (colorize (tt "rhs ...") "green")
   (tt ")"))
  (t "")) ; no footnote
 
@@ -585,22 +599,16 @@
 
 (slide
  (comment "Used to have to manually traverse syntax tree with cars and cdrs, or use quasiquoting. syntax-rules first appeared in the Scheme Report as an appendix to R4RS in 1991, and became officially a part of the Scheme specification in R5RSin 1998")
- #:title "Contributions"
+ #:title (frame (tt "syntax-rules"))
  #:name Kohlbecker1987
  (citation Kohlbecker1987)
- 'alts
- (list
-  (list
-   (hb-append (t-small "Much Better Way: ") (ghost (frame (tt "syntax-rules")))))
-   (list
-    (hb-append (t-small "Much Better Way: ") (frame (tt "syntax-rules")))))
  'next
  (t-small "(predecessor to)")
  'next
  (item "pattern matching")
  (item "ellipses matches repetitive elements")
  (item "multiple cases")
- (item "fenders on each case")
+ #;(item "fenders on each case")
  (item "hygiene (using Kohlbecker, et al. 1986)"))
 
 ; syntax-rules example - named let??? (named let needs capturing???)
@@ -657,8 +665,8 @@
  'next
  (my-para-small "\"The problem with syntactic closures is that they are inherently low-level and therefore difficult to use correctly ... It is impossible to construct a pattern-based, automatically hygienic macro system on top of syntactic closures because the pattern interpreter must be able to determine the syntactic role of an identifier (in order to close it in the correct syntactic environment) before macro expansion has made that role apparent.\""))
 
-(let ([val-colored (colorize (tt "val") "green")]
-      [x-colored (colorize (tt "x") "red")]
+(let ([val-colored (colorize (tt "rhs") "green")]
+      [x-colored (colorize (tt "var") "red")]
       [body-colored (colorize (tt "body") "blue")])
   (slide
    (comment "")
@@ -779,13 +787,13 @@
 
 (slide
  (comment "")
- #:title "Contributions"
+ #:title (frame (tt "syntax-case"))
  #:name Dybvig1992a
  (citation Dybvig1992a)
  #;(citation Dybvig1992b)
- (frame (tt "syntax-case"))
  (subitem "combines high-level and low-level systems")
  (subitem "(can write unhygienic macros)")
+ (subitem "fenders on each case")
  (subitem "referential transparency")
  (subitem "source code matched to expanded code")
  'next
@@ -846,4 +854,147 @@
  #:name Culpepper2010
  (citation Culpepper2010)
  'next
- (my-para-small ""))
+ (blank)
+ (my-para-small "Without validation, macros aren't true abstractions.")
+ 'next
+ (blank)
+ (my-para-small "Existing systems make it surprisingly difficult to produce easy-to-understand macros that properly validate their syntax."))
+
+(slide
+ (comment "")
+ #:name "syntax case with guards"
+ #:title (hb-append (tt "syntax-case") (t " with guards"))
+ (vl-append
+  (tt-small "(define-syntax (checked-let1 stx)")
+  (tt-small "  (syntax-case stx ()")
+  (tt-small "    [(_ ([var rhs] ...) body)")
+  (colorize 
+   (vl-append
+    (tt-small "     (and (andmap identifier? (syntax->list #'(var ...)))")
+    (tt-small "          (not (check-duplicate-identifier #'(var ...))))"))
+   "purple")
+  (tt-small "     #'((λ (var ...) body) rhs ...)])"))
+ )
+
+(slide
+ (comment "")
+ #:name Culpepper2010
+ (citation Culpepper2010)
+ (my-para-small "Guard expressions suffice to prevent macros from accepting invalid syntax, but they suffer from two flaws. First, since guard expressions are separated from transformation expressions, work needed both for validation and transformation must be performed twice and code is often duplicated. Second and more important, guards do not explain why the syntax was invalid. That is, they only control matching; they do not track causes of failure."))
+
+(slide
+ (comment "Error code to actual code is about 10-1. And we are not even catching all errors.")
+ #:name "syntax-case with guards + error messages"
+ #:title (hb-append (tt "syntax-case") (t " with guards + error messages"))
+ (vl-append
+  (tt-small "(define-syntax (checked-let1 stx)")
+  (tt-small "  (syntax-case stx ()")
+  (tt-small "    [(_ ([var rhs] ...) body)")
+  (colorize 
+   (vl-append
+    (tt-small "(begin")
+    (tt-small "  (for-each ")
+    (tt-small "   (λ (x)")
+    (tt-small "     (unless (identifier? x)")
+    (tt-small "       (raise-syntax-error ")
+    (tt-small "        'not-identifier \"expected identifier\" stx x)))")
+    (tt-small "   (syntax->list #'(var ...)))")
+    (tt-small "  (let ([dup (check-duplicate-identifier #'(var ...))])")
+    (tt-small "   (when dup")
+    (tt-small "     (raise-syntax-error ")
+    (tt-small "      'duplicate-var \"duplicate variable name\" stx dup))))"))
+   "purple")
+  (tt-small "     #'((λ (var ...) body) rhs ...)])"))
+ )
+
+
+(slide
+ (comment "")
+ #:name "syntax-parse"
+ #:title (frame (tt "syntax-parse"))
+ (citation Culpepper2010)
+ (item "pattern variables annotated with syntax class")
+ (item "define new syntax classes")
+ (item "better error reporting")
+ )
+
+(slide
+ (comment "")
+ #:name Culpepper2010
+ (citation Culpepper2010)
+ (vl-append
+  (tt-small "(define-syntax (checked-let3 stx)")
+  (tt-small "  (syntax-parse stx")
+  (hb-append (tt-small "    [(_ ([var")
+             (colorize (tt-small ":identifier") "purple")
+             (tt-small " rhs")
+             (colorize (tt-small ":expr") "purple")
+             (tt-small "] ...) body")
+             (colorize (tt-small ":expr") "purple")
+             (tt-small ")"))
+  (colorize 
+   (vl-append
+    (tt-small "     #:fail-when (check-duplicate-identifier #'(var ...))")
+    (tt-small "                 \"duplicate variable name\""))
+   "purple")
+  (tt-small "     #'((λ (var ...) body) rhs ...)])"))
+ )
+
+(slide
+ #:name "syntax-class"
+ #:title (frame (tt "syntax-class"))
+ (citation Culpepper2010)
+ (vl-append
+  (tt-small "(define-syntax-class binding")
+  (tt-small "  #:description \"binding pair\"")
+  (tt-small "  (pattern [var:identifier rhs:expr]))")))
+
+(slide
+ (comment "")
+ #:name Culpepper2010
+ (citation Culpepper2010)
+ (vl-append
+  (tt-small "(define-syntax (checked-let4 stx)")
+  (tt-small "  (syntax-parse stx")
+  (hb-append (tt-small "    [(_ ([b")
+             (colorize (tt-small ":binding") "purple")
+             (tt-small " ...]) body")
+             (colorize (tt-small ":expr") "purple")
+             (tt-small ")"))
+  (colorize 
+   (vl-append
+    (tt-small "     #:fail-when (check-duplicate-identifier #'(b.var ...))")
+    (tt-small "                 \"duplicate variable name\""))
+   "purple")
+  (tt-small "     #'((λ (b.var ...) body) b.rhs ...)])"))
+ )
+
+(slide
+ #:name "distinct-bindings"
+ #:title "distinct-bindings"
+ (citation Culpepper2010)
+ (vl-append
+  (tt-small "(define-syntax-class distinct-bindings")
+  (tt-small "  #:description \"sequence of binding pairs\"")
+  (tt-small "  (pattern (b.binding ...)")
+  (tt-small "           #:fail-when ")
+  (tt-small "             (check-duplicate-identifier #'(var ...))")
+  (tt-small "             \"duplicate variable name\"")
+  (tt-small "           #:with (var ...) #'(b.var ...)")
+  (tt-small "           #:with (rhs ...) #'(b.rhs ...)")
+ ))
+
+(slide
+ (comment "")
+ #:name Culpepper2010
+ (citation Culpepper2010)
+ (vl-append
+  (tt-small "(define-syntax (checked-let5 stx)")
+  (tt-small "  (syntax-parse stx")
+  (hb-append (tt-small "    [(_ bs")
+             (colorize (tt-small ":distinct-bindings") "purple")
+             (tt-small " body")
+             (colorize (tt-small ":expr") "purple")
+             (tt-small ")"))
+  (tt-small "     #'((λ (bs.var ...) body) bs.rhs ...)])"))
+ )

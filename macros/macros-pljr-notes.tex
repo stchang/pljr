@@ -18,6 +18,12 @@
 
 \begin{document}							% TWO LINES PLUS THE \end COMMAND AT
 															% THE END
+\subsubsection*{What Are Macros?}
+\begin{itemize}
+	\item ``Essentially, macros are an API for extending the front end of the compiler. Unlike many language extension tools, however, a macro is part of the program whose syntax it extends; no separate pre-processor is used.''~\cite[p1]{Culpepper2010Fortifying}
+	\item ``A macro definition associates a name with a compile-time function, ie - a \emph{syntax transformer}.''~\cite[p1]{Culpepper2010Fortifying}
+\end{itemize}
+
 \subsubsection*{Motivation}
 \begin{itemize}
 	\item ``Modern programming languages offer powerful facilities for procedural and data abstraction which encapsulate commonly-used patterns of procedure invocation and of data usage, respectively. Often, however, one encounters typical patterns of linguistic usage that do not fall neatly into either category. (example is \verb!let!)''~\cite[p77]{Kohlbecker1987Macrobyexample}
@@ -202,6 +208,24 @@ The same situation holds for macro expansions. It does not work to simply expand
 \begin{itemize}
 	\item ``Module system avoids the problems of \verb!eval-when! by making module dependencies explicit (instead of relying on the side-effects of \verb!load!), and by distinguishing compile-time dependencies from run-time dependencies. Moreover, the macro system enforces a separation between different phases, ie, compile-time variables are never resolved to run-time values that happen to be loaded.'' (p2)
 	\item ``Tracking such dependencies requires an extension of previously known macro-expansion techniques. Our extension tracks the phase and phase-specific binding of each transformed identifier to resolve bindings correctly and at a well-defined time.'' (p2) 
+\end{itemize}
+\paragraph{Criticism}
+\begin{itemize}
+	\item
+\end{itemize}
+
+
+\subsubsection*{Culpepper - Fortifying Macros (2010 ICFP)}
+\paragraph{Motivation}
+\begin{itemize}
+	\item ``Syntaxtic mistakes should be reported in terms of the programmer's error, not an error discovered after several rounds of rewriting; and furthermore, the mistake should be reported in terms documented by the language extension.''~\cite[p1]{Culpepper2010Fortifying}
+	\item ``Existing systems make it surprisingly difficult to produce easy-to-understand macros that propertly validate their syntax. These systems force the programmer to mingle the declarative specification of syntax and semantics with highly detailed validation code.''~\cite{Culpepper2010Fortifying}
+	\item ``Without validation, macros are not truly abstractions.''~\cite{Culpepper2010Fortifying}
+	\item ``Instead, erroneous terms flow through the parsing process until they eventually trip over constraint checks at a low level in the language tower. Low-level checking yields incoherent error messages and leaves programmers searching for explanations.''~\cite{Culpepper2010Fortifying}
+\end{itemize}
+\paragraph{Contribution}
+\begin{itemize}
+	\item
 \end{itemize}
 \paragraph{Criticism}
 \begin{itemize}

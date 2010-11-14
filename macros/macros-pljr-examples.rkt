@@ -1,6 +1,7 @@
 #lang racket
 
 (require test-engine/racket-tests)
+(require (for-syntax syntax/parse))
 
 
 ;; ----------------------------------------------------------------------------
@@ -51,6 +52,40 @@
      (letrec ([name (λ (x ...) body)]) 
        (name val ...))]))
 
+(define-syntax (my-let-checked1 stx)
+  (syntax-case stx ()
+    [(_ ([x val] ...) body)
+     (and (andmap identifier? (syntax->list #'(x ...)))
+          (not (check-duplicate-identifier #'(x ...))))
+     #'((λ (x ...) body) val ...)]))
+
+(define-syntax (my-let-checked2 stx)
+  (syntax-case stx ()
+    [(_ ([x val] ...) body)
+     (begin
+       (for-each 
+        (λ (x)
+          (unless (identifier? x)
+            (raise-syntax-error
+             'not-identifier "expected identifier" stx x)))
+        (syntax->list #'(x ...)))
+       (let ([dup (check-duplicate-identifier #'(x ...))])
+         (when dup
+           (raise-syntax-error 
+            'duplicate-var "duplicate variable name" stx dup))))
+     #'((λ (x ...) body) val ...)]))
+
+(define-syntax (my-let-checked3 stx)
+  (syntax-parse 
+   stx 
+   [(_ ([x:identifier val:expr] ...) body:expr)
+    #:fail-when (check-duplicate-identifier #'(x ...))
+    "duplicate variable name"
+    #'((λ (x ...) body) val ...)]))
+
+
+
+
 (check-expect
  (my-let ([x 1] 
           [y (+ 2 3)])
@@ -63,7 +98,11 @@
       0 
       (+ x (loop (sub1 x)))))
  15)
-
+; (my-let ([1 2]) 3) ; bad syntax, var should be identifier, get λ error
+; (my-let ([x 1) [x 2]) x) ; bad syntax, duplicate var, get λ error
+; (my-let ([(x y) 4]) x) ; bad syntax, thinks lambda arg has optional param
+; (my-let ([x (+ 1)]) x) ; bad syntax, rhs
+; (my-let ([x 1 2]) x) ; bad syntax, rhs
 
 ;; ----------------------------------------------------------------------------
 ;; my-time
