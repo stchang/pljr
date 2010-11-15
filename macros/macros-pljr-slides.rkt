@@ -924,7 +924,7 @@ If you've ever read Paul Graham's essay called 'Beating The Averages', he basica
  (vl-append
   (tt-small "(define-syntax-class distinct-bindings")
   (tt-small "  #:description \"sequence of binding pairs\"")
-  (tt-small "  (pattern (b.binding ...)")
+  (tt-small "  (pattern (b:binding ...)")
   (tt-small "           #:fail-when ")
   (tt-small "             (check-duplicate-identifier #'(var ...))")
   (tt-small "             \"duplicate variable name\"")
