@@ -7,7 +7,24 @@
 ;; ----------------------------------------------------------------------------
 ;; my-cond
 
-(define-syntax my-cond
+
+
+(define-syntax my-cond1
+  (syntax-rules (else)
+    [(_ [else body]) body]
+    [(_ [guard body])
+     (let ([use-this-clause? guard])
+       (if use-this-clause?
+           body
+           #f))]
+    [(_ [guard body] clause ...)
+     (let ([use-this-clause? guard])
+       (if use-this-clause?
+           body
+           (my-cond1 clause ...)))]))
+
+
+(define-syntax my-cond2
   (syntax-rules (else =>)
     [(_ [else body]) body]
     [(_ [guard body])
@@ -24,21 +41,21 @@
      (let ([test-expr-maybe test-expr])
        (if test-expr-maybe
            (fn test-expr-maybe)
-           (my-cond clause ...)))]
+           (my-cond2 clause ...)))]
     [(_ [guard body] clause ...)
      (let ([use-this-clause? guard])
        (if use-this-clause?
            body
-           (my-cond clause ...)))]))
+           (my-cond2 clause ...)))]))
 
-(check-expect (my-cond [#t 1]) 1)
-(check-expect (my-cond [#f 2]) #f)
-(check-expect (my-cond [(= 1 2) 1] [(= 2 2) (+ 4 5)]) 9)
-(check-expect (my-cond [else (+ 3 4)]) 7)
-(check-expect (my-cond [(< 1 0) (+ 4 5)] [else (+ 4 5)]) 9)
-; (my-cond (my-cond [(#f 1)] [else 2] [#f 3])) -> error
-(check-expect (my-cond [1 => (λ (x) (add1 x))]) 2)
-(check-expect (my-cond [#f => (λ (x) x)] [2 => (λ (x) (+ x 40))]) 42)
+(check-expect (my-cond1 [#t 1]) 1)
+(check-expect (my-cond1 [#f 2]) #f)
+(check-expect (my-cond1 [(= 1 2) 1] [(= 2 2) (+ 4 5)]) 9)
+(check-expect (my-cond1 [else (+ 3 4)]) 7)
+(check-expect (my-cond1 [(< 1 0) (+ 4 5)] [else (+ 4 5)]) 9)
+; (my-cond (my-cond1 [(#f 1)] [else 2] [#f 3])) -> error
+(check-expect (my-cond2 [1 => (λ (x) (add1 x))]) 2)
+(check-expect (my-cond2 [#f => (λ (x) x)] [2 => (λ (x) (+ x 40))]) 42)
 
 
 ;; ----------------------------------------------------------------------------
@@ -117,6 +134,19 @@
 
 
 
+
+;; ----------------------------------------------------------------------------
+;; loop with break
+
+(define-syntax (loop stx)
+  (syntax-case stx ()
+    [(_ body)
+     (with-syntax
+         ([exit-id (datum->syntax stx 'exit)])
+       #'(call/cc
+          (λ (exit-id)
+            (letrec ([f (λ () (begin body (f)))]) 
+              (f)))))]))
 ;; ----------------------------------------------------------------------------
 ;; cas-cad-e
 

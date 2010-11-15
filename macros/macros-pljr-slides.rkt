@@ -79,128 +79,12 @@
        (code . exprs))]))
 
 
-;; Pict -> Pict
-;; Creates a new instance of a pict
-;; For when you need a unique instance of a pict like when using pin-arrow-line
-(define (pict-copy p) (cc-superimpose (blank) p))
-
-
 ;; underlines a pict of text
 (define (underline text-pict)
   (refocus 
    (vc-append text-pict
               (hline (pict-width text-pict) 5))
    text-pict))
-
-
-
-
-
-;; apply-f-to-index : (X -> X) Number [Listof X] -> [Listof X]
-;; Applies given f to element at specified index of given list.
-;; Applies f-default to all other elements. Returns new list.
-(define (apply-f-to-index f f-default i lst)
-  (define (helper lst counter)
-    (cond
-      [(empty? lst) empty]
-      [else
-       (if (= counter i)
-           (cons (f (first lst)) (helper (rest lst) (add1 counter)))
-           (cons (f-default (first lst)) (helper (rest lst) (add1 counter))))]))
-  (helper lst 0))
-  
-
-;; --------------------------------------
-;; connect-with-arrow- fns
-;; connect 2 picts with an arrow
-;; Pict Pict Number Number Number -> Pict
-;; --------------------------------------
-(define (connect-with-arrow-vc pict1 pict2 
-                               arrow-line-length 
-                               arrow-line-width 
-                               arrow-head-size)
-  (let
-      ([group (vc-append pict1 (blank 0 arrow-line-length) pict2)])
-    (pin-arrow-line arrow-head-size group pict1 cb-find pict2 ct-find 
-                    #:line-width arrow-line-width)))
-
-(define (connect-with-arrow-vc-rev pict1 pict2 
-                                   arrow-line-length 
-                                   arrow-line-width 
-                                   arrow-head-size)
-  (let
-      ([group (vc-append pict1 (blank 0 arrow-line-length) pict2)])
-    (pin-arrow-line arrow-head-size group pict2 ct-find pict1 cb-find 
-                    #:line-width arrow-line-width)))
-
-(define (connect-with-arrow-hc pict1 pict2 
-                               arrow-line-length 
-                               arrow-line-width 
-                               arrow-head-size)
-  (let
-      ([group (hc-append pict1 (blank arrow-line-length 0) pict2)])
-    (pin-arrow-line arrow-head-size group pict1 rc-find pict2 lc-find 
-                    #:line-width arrow-line-width)))
-
-
-
-
-;; ----------------------------------------------------------------------------
-;; Xjoin-with- fns
-;; Consumes non-empty list of picts and joins them with specified separator
-;; to produce one combined pict
-;; [listof Pict] -> Pict
-;; ----------------------------------------------------------------------------
-(define (hjoin-with pictlst sep)
-  (foldl (λ (x acc) (ht-append acc sep x)) (first pictlst) (rest pictlst)))
-(define (vjoin-with pictlst sep)
-  (foldl (λ (x acc) (vc-append acc sep x)) (first pictlst) (rest pictlst)))
-
-(define (hjoin-with-arrows pictlst)
-  (hjoin-with pictlst (cc-superimpose (blank 20 20) (arrow 10 0))))
-
-(define (vjoin-with-arrows pictlst)
-  (vjoin-with pictlst (cc-superimpose (blank 0 20) (arrow 10 (* 1.5 pi)))))
-  
-
-
-;; ----------------------------------------------------------------------------
-;; make-square-arrow- : pict pict pict Number (Number = 1 Number = 10)
-;; creates square arrows connecting two picts in a group of picts
-;; ----------------------------------------------------------------------------
-(define (make-square-arrow-top group from-pict to-pict arrow-length 
-                               (arrow-width 1) (arrow-size 10))
-  (let-values
-      ([(x y) (lt-find group group)]
-       [(x1 y1) (ct-find group from-pict)]
-       [(x2 y2) (ct-find group to-pict)]
-       [(no-arrow-line) 
-        (connect-with-arrow-vc (blank) (blank) 
-                               arrow-length arrow-width 0)]
-       [(arrow-line) 
-        (connect-with-arrow-vc (blank) (blank) 
-                               arrow-length arrow-width arrow-size)])
-    (pin-arrow-line 
-     0 (hb-append (blank (- x1 x) 0) no-arrow-line 
-                  (blank (- x2 x1 x) 0) arrow-line)
-     no-arrow-line lt-find arrow-line rt-find)))
-
-(define (make-square-arrow-bot group from-pict to-pict arrow-length 
-                               (arrow-width 1) (arrow-size 10))
-  (let-values
-      ([(x y) (lb-find group group)]
-       [(x1 y1) (cb-find group from-pict)]
-       [(x2 y2) (cb-find group to-pict)]
-       [(no-arrow-line) 
-        (connect-with-arrow-vc (blank) (blank) 
-                               arrow-length arrow-width 0)]
-       [(arrow-line) 
-        (connect-with-arrow-vc-rev (blank) (blank) 
-                                   arrow-length arrow-width arrow-size)])
-    (pin-arrow-line 
-     0 (ht-append (blank (- x1 x) 0) no-arrow-line 
-                  (blank (- x2 x1 x) 0) arrow-line)
-     no-arrow-line lb-find arrow-line rb-find)))
 
 (define (strikethrough p)
   (cc-superimpose p (hline (pict-width p) (pict-height p))))
@@ -237,10 +121,13 @@
 (define Culpepper2010
   "Culpepper - \"Fortifying Macros\", 2010 ICFP")
 
+(define Culpepper2004
+  "Culpepper - \"Taming Macros\", 2004 GPCE")
+(define Herman2010
+  "Herman - \"A Theory of Typed Hygienic Macros\", 2010 NEU Dissertation")
+
 ;; ----------------------------------------------------------------------------
 ;; Slides start
-;; ----------------------------------------------------------------------------
-(slide)
 (define (make-title-slide-content 
          spacer-txt1 super-txt1 spacer-txt2 super-txt2 title-txt)
   (list 
@@ -258,7 +145,9 @@
 
 ; Title
 (slide
- (comment "")
+ (comment "I have a confession to make. I lied in my abstract. My abstract somewhat implied that this talk would be about the history of all macros, but that's not quite true. I'm sorry to say that if you came here eager to learn about Tex macros, for example, you may be disappointed. 
+
+The papers I'll discuss in this talk will primarily be about the Scheme and Racket macro system; but I'll qualify this with a mostly, since some other macro systems will also get mentioned. The reason for this is that I and many others believe that the Scheme, and especially the Racket macro system represents the state-of-the-art in macros. But dont worry, all the theory discussed in this talk is not Scheme-specific, so if for some reason you dont want to use Scheme, you can always implement a modern macro system in your favorite language.")
  #:name "Title"
  'alts
  (list
@@ -280,8 +169,9 @@
 
 ; Abstraction Mechanisms in Programming Languages
 (slide
- (comment "Programming languages are all about abstraction. Instead of having to program in 1s and 0s, using a programming language makes programming much easier because a lot of the unncessary details are abstracted away. In addition, programming languages often provide ways for the programmer to create user-defined abstractions, for commonly used programming patterns. What are some of these abstraction mechanisms?"
-          "Functions. Structs. But some usage patterns can't be expressed with procedural or data abstractions. So some languages give programmers an additional abstraction mechanism, macros. Macros are used to create syntactic abstractions.")
+ (comment "Programming languages are all about abstraction. Instead of having to program in 1s and 0s, using a programming language makes programming much easier because a lot of the unncessary details are abstracted away. Programming languages give us nice concise constructs for the most commonly used programming patterns, like loops or conditionals, for example.
+
+In addition, programming languages often provide ways for the programmer to create user-defined abstractions, for new patterns that you want to represent. What are some of these abstraction mechanisms? Functions. Structs. So some languages give programmers an additional abstraction mechanism, macros. Macros are used to create syntactic abstractions.")
  #:name "Abstraction Mechanisms in Programming Languages"
  #:title "Abstraction Mechanisms in Programming Languages"
  'next
@@ -293,9 +183,13 @@
 
 
 ;When To Use Macros
-(let ([felleisen (rectangle 10 10) #;(bitmap "felleisen.jpg")])
+(let ([felleisen (bitmap "felleisen.jpg")])
 (slide
- (comment "The last point can be anything from making syntax prettier and more concise, to developing a full blown DSL. At its root, languages, programming or otherwise, are about efficient communication. And as many language designers (again, programming or otherwise) have observed, when faced with a task, it's often most efficient to just develop your own language. In fact, most programming languages were developed for a very specific task in mind (C for unix, Java for the web, etc). So philosophy of a language like Lisp or Scheme (and Racket) is to have a very small but expressive core, and then have powerful language extension mechanisms (ie - macros) so that it's really easy to customize the language to suite your needs. If you've ever read Paul Graham's essay called 'Beating The Averages', he basically credits his success with his startup Viaweb, which was acquired by Yahoo and is now Yahoo Stores, to macros. Funny story ...")
+ (comment "A common question from macro newbies is, why do I need syntactic abstraction? Can't I just use functions to do anything macros can do? The answer is no. Some usage patterns can't be expressed with procedural or data abstractions. 
+
+The last point can be anything from making syntax prettier and more concise, to developing a full blown DSL. At its root, languages, programming or otherwise, are about efficient communication. Time and time again, people when trying to describe a problem or the solution to a problem (again, programming or otherwise), have observed that it's most efficient to just come up with a DSL first. In fact, most \"general purpose\" programming languages were developed for a very specific task in mind (Lisp for AI, Fortran for scientific computing, C for unix, etc). So the philosophy of a language like Lisp or Scheme (and Racket) is to have a very small but expressive core, and then have powerful language extension mechanisms (ie - macros) so that it's really easy to customize the language to suite your needs. 
+
+If you've ever read Paul Graham's essay called 'Beating The Averages', he basically credits the success of his startup Viaweb, which was acquired by Yahoo and is now Yahoo Stores, to macros, with which he created his own DSL and was able to constantly get his product or new features in his product, to market faster than his competitors. Funny story ...")
  #:name "When To Use Macros"
  (t "Q: Can't I just use functions to do anything macros can do?")
  'next
@@ -543,7 +437,7 @@
  'next
  (t-small "macro expands to")
  (vl-append
-  (tt "(let ([v:0 true0])")
+  (tt "(let ([v:0 true])")
   (tt "  (let ([v:1 false])")
   (tt "    (if v:1 v:1 v:0)))")))
 
@@ -600,7 +494,7 @@
 (slide
  (comment "Used to have to manually traverse syntax tree with cars and cdrs, or use quasiquoting. syntax-rules first appeared in the Scheme Report as an appendix to R4RS in 1991, and became officially a part of the Scheme specification in R5RSin 1998")
  #:title (frame (tt "syntax-rules"))
- #:name Kohlbecker1987
+ #:name "syntax-rules"
  (citation Kohlbecker1987)
  'next
  (t-small "(predecessor to)")
@@ -609,7 +503,10 @@
  (item "ellipses matches repetitive elements")
  (item "multiple cases")
  #;(item "fenders on each case")
- (item "hygiene (using Kohlbecker, et al. 1986)"))
+ (item "hygiene (using Kohlbecker, et al. 1986)")
+ 'next
+ (blank)
+ (frame (t "Allows macro definitions that look like specifications!")))
 
 ; syntax-rules example - named let??? (named let needs capturing???)
 (slide
@@ -618,6 +515,12 @@
  #:title (hb-append (tt "syntax-rules") (t " examples")))
 
 
+(slide
+ (comment "")
+ #:name "Summary So Far"
+ #:title "Summary So Far"
+ (citation Kohlbecker1986)
+ (citation Kohlbecker1987))
 
 ;; ----------------------------------------------------------------------------
 ;; Bawden, Rees - Syntactic Closures
@@ -626,7 +529,7 @@
  #:name Bawden1988
  (citation Bawden1988)
  'next
- (my-para-small "\"\"Hygienic macro expansion\" (of Kohlbecker, et al.) is the only other complete solution to the macro scoping problems of which we are aware. Hygienic expansion works by \"painting\" the entire input expression with some distinctive color before passing it in to the expander. Then the returned replacement expression is examined to find those parts that originated from the input expression; these can be identified by their color. The names in the unpainted text are protected from capture by the painted text, and vice versa.\""))
+ (my-para-small "\"\"Hygienic macro expansion\" (of Kohlbecker, et al.) works by \"painting\" the entire input expression with some distinctive color before passing it in to the expander. Then the returned replacement expression is examined to find those parts that originated from the input expression; these can be identified by their color. The names in the unpainted text are protected from capture by the painted text, and vice versa.\""))
 
 (slide
  (comment "")
@@ -653,7 +556,13 @@
 
 
 
-
+(slide
+ (comment "")
+ #:name "Summary So Far"
+ #:title "Summary So Far"
+ (citation Kohlbecker1986)
+ (citation Kohlbecker1987)
+ (citation Bawden1988))
 
 ;; ----------------------------------------------------------------------------
 ;; Clinger, Rees - Macros That Work
@@ -682,7 +591,7 @@
     (tt "≡")
     (hb-append
      (tt "((λ (")
-     (colorize (tt "x ...") "red")
+     (colorize (tt "var ...") "red")
      (tt ") ")
      body-colored
      (tt ") ")
@@ -713,7 +622,7 @@
  (comment "")
  #:name Clinger1991
  (citation Clinger1991)
- (my-para-small "\"Consider an analogy from lambda calculus. In reducing an expression to normal form by textual substitution, it is sometimes necessary to rename variables as part of a beta reduction. It doesn't work to perform all the (naive) beta reductions first, without renaming, and then to perform all the necessary alpha conversions; by then it is too late. Nor does it work to do all the alpha conversions first, because beta reductions introduce new oppotunities for name clashes. The renamings must be" (it-small "interleaved") "with the (naive) beta reductions, which is the reason why the notion of substitution required by the non-naive beta rule is so complicated.\"")
+ (my-para-small "\"Consider an analogy from lambda calculus. In reducing an expression to normal form by textual substitution, it is sometimes necessary to rename variables as part of a beta reduction. It doesn't work to perform all the (naive) beta reductions first, without renaming, and then to perform all the necessary alpha conversions; by then it is too late. Nor does it work to do all the alpha conversions first, because beta reductions introduce new opporunities for name clashes. The renamings must be" (it-small "interleaved") "with the (naive) beta reductions, which is the reason why the notion of substitution required by the non-naive beta rule is so complicated.\"")
  'next
  (my-para-small "\"The same situation holds for macro expansions. It does not work to simply expand all macro calls and then rename variables, nor can the renamings be performed before expansion. The two processes must be interleaved in an appropriate manner. A correct and efficient realization of this interleaving is our primary contribution.\""))
 
@@ -753,7 +662,9 @@
  (my-para-small "\"We would like for free variables that occur on the right hand side of a rewriting rule for a macro to be resolved in the lexical environment of the macro" (bt-small "definition") "instead of being resolved in the lexical environment of the" (bt-small "use") "of the macro.\"")
  'next
  (my-para-small #:fill? #f "...")
- (my-para-small "\"Our algorithm supports referentially transparent macros.\""))
+ (my-para-small "\"Our algorithm supports referentially transparent macros.\"")
+ 'next
+ (t-small "(unlike previous algorithms)"))
 
 
 
@@ -764,7 +675,14 @@
  (my-para-small "\"A high-level macro system similar to that described here is currently implemented on top of a compatible low-level system that is not described in this paper.\""))
 
 
-
+(slide
+ (comment "")
+ #:name "Summary So Far"
+ #:title "Summary So Far"
+ (citation Kohlbecker1986)
+ (citation Kohlbecker1987)
+ (citation Bawden1988)
+ (citation Clinger1991))
 
 ;; ----------------------------------------------------------------------------
 ;; Dybvig, Hieb, Bruggeman - Syntactic Abstraction in Scheme, 1992 LSC
@@ -783,14 +701,15 @@
  #:name Dybvig1992a
  (citation Dybvig1992a)
  #;(citation Dybvig1992b)
- (my-para-small "\"Lisp macro systems cannot track source code through the macro-expansion process. Reliable correlation of course code and macro-expanded code is necessary if the compiler, run-time system, and debugger are to communicate with the program in terms of the original source program.\""))
+ (my-para-small "\"Lisp macro systems cannot track source code through the macro-expansion process. Reliable correlation of source code and macro-expanded code is necessary if the compiler, run-time system, and debugger are to communicate with the program in terms of the original source program.\""))
 
 (slide
  (comment "")
  #:title (frame (tt "syntax-case"))
- #:name Dybvig1992a
+ #:name "syntax-case"
  (citation Dybvig1992a)
  #;(citation Dybvig1992b)
+ 'next
  (subitem "combines high-level and low-level systems")
  (subitem "(can write unhygienic macros)")
  (subitem "fenders on each case")
@@ -804,6 +723,16 @@
  #:name "syntax-case examples"
  #:title (hb-append (tt "syntax-case") (t " examples")))
 
+
+(slide
+ (comment "")
+ #:name "Summary So Far"
+ #:title "Summary So Far"
+ (citation Kohlbecker1986)
+ (citation Kohlbecker1987)
+ (citation Bawden1988)
+ (citation Clinger1991)
+ (citation Dybvig1992a))
 
 ;; ----------------------------------------------------------------------------
 ;; Flatt - Composable and Compilable Macros: You Want it When?
@@ -846,6 +775,16 @@
  #:name Flatt2002
  #:title "Phase Examples in Racket")
 
+(slide
+ (comment "")
+ #:name "Summary So Far"
+ #:title "Summary So Far"
+ (citation Kohlbecker1986)
+ (citation Kohlbecker1987)
+ (citation Bawden1988)
+ (citation Clinger1991)
+ (citation Dybvig1992a)
+ (citation Flatt2002))
 
 ;; ----------------------------------------------------------------------------
 ;; Culpepper - Fortifying Macros, 2010 ICFP
@@ -855,10 +794,10 @@
  (citation Culpepper2010)
  'next
  (blank)
- (my-para-small "Without validation, macros aren't true abstractions.")
+ (my-para-small "\"Without validation, macros aren't true abstractions.\"")
  'next
  (blank)
- (my-para-small "Existing systems make it surprisingly difficult to produce easy-to-understand macros that properly validate their syntax."))
+ (my-para-small "\"Existing systems make it surprisingly difficult to produce easy-to-understand macros that properly validate their syntax.\""))
 
 (slide
  (comment "")
@@ -880,14 +819,18 @@
  (comment "")
  #:name Culpepper2010
  (citation Culpepper2010)
- (my-para-small "Guard expressions suffice to prevent macros from accepting invalid syntax, but they suffer from two flaws. First, since guard expressions are separated from transformation expressions, work needed both for validation and transformation must be performed twice and code is often duplicated. Second and more important, guards do not explain why the syntax was invalid. That is, they only control matching; they do not track causes of failure."))
+ (my-para-small "\"Guard expressions suffice to prevent macros from accepting invalid syntax, but they suffer from two flaws.\"")
+ 'next
+ (my-para-small "1) \"Since guard expressions are separated from transformation expressions, work needed both for validation and transformation must be performed twice and code is often duplicated.\"")
+ 'next
+ (my-para-small "2) \"Guards do not explain why the syntax was invalid. That is, they only control matching; they do not track causes of failure.\""))
 
 (slide
  (comment "Error code to actual code is about 10-1. And we are not even catching all errors.")
  #:name "syntax-case with guards + error messages"
  #:title (hb-append (tt "syntax-case") (t " with guards + error messages"))
  (vl-append
-  (tt-small "(define-syntax (checked-let1 stx)")
+  (tt-small "(define-syntax (checked-let2 stx)")
   (tt-small "  (syntax-case stx ()")
   (tt-small "    [(_ ([var rhs] ...) body)")
   (colorize 
@@ -913,6 +856,7 @@
  #:name "syntax-parse"
  #:title (frame (tt "syntax-parse"))
  (citation Culpepper2010)
+ 'next
  (item "pattern variables annotated with syntax class")
  (item "define new syntax classes")
  (item "better error reporting")
@@ -966,8 +910,12 @@
     (tt-small "     #:fail-when (check-duplicate-identifier #'(b.var ...))")
     (tt-small "                 \"duplicate variable name\""))
    "purple")
-  (tt-small "     #'((λ (b.var ...) body) b.rhs ...)])"))
- )
+  (hb-append (tt-small "     #'((λ (")
+             (colorize (tt-small "b.var") "purple")
+             (tt-small " ...) body) ")
+             (colorize (tt-small "b.rhs") "purple")
+             (tt-small " ...)])"))
+ ))
 
 (slide
  #:name "distinct-bindings"
@@ -996,5 +944,28 @@
              (tt-small " body")
              (colorize (tt-small ":expr") "purple")
              (tt-small ")"))
-  (tt-small "     #'((λ (bs.var ...) body) bs.rhs ...)])"))
- )
+  (hb-append (tt-small "     #'((λ (")
+             (colorize (tt-small "bs.var") "purple")
+             (tt-small " ...) body) ")
+             (colorize (tt-small "bs.rhs") "purple")
+             (tt-small " ...)])"))
+ ))
+
+(slide
+ (comment "")
+ #:name "Final Summary"
+ #:title "Final Summary"
+ (citation Kohlbecker1986)
+ (citation Kohlbecker1987)
+ (citation Bawden1988)
+ (citation Clinger1991)
+ (citation Dybvig1992a)
+ (citation Flatt2002)
+ (citation Culpepper2010))
+
+(slide
+ (comment "")
+ #:name "Additional Reading"
+ #:title "Additional Reading"
+ (citation Culpepper2004)
+ (citation Herman2010))
